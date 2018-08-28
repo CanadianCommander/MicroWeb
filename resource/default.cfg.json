@@ -1,0 +1,20 @@
+{
+  "TCPProtocol": "tcp4",
+  "TCPPort": ":8080",
+  "staticDirectory": "./exampleWeb/",
+  "logFile": "./web.log",
+  "logVerbosity": "info",
+  "httpReadTimout": "500ms",
+  "httpResponseTimeout": "500ms",
+  "plugins":
+    [
+      {
+        "binding": "/template/test.gohtml",
+        "plugin":"resource/plugin1/plug1.so"
+      },
+      {
+        "binding": "/template/index.gohtml",
+        "plugin":"resource/plugin2/plug2.so"
+      }
+    ]
+}
