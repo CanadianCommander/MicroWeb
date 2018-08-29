@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"microWeb/pkg/logger"
 	"net/http"
@@ -26,15 +25,17 @@ func main() {
 	if LoadSettingsFromFile() != nil {
 		logger.LogWarning("Could not load settings from log file")
 	}
+	stopChan := WatchConfigurationFile()
+	defer close(stopChan)
 
 	//TODO cache settings from file
 	StartCache(0xFFFF)
 
 	//create webserver
 	var handlerList []*http.Handler
-	httpServer, err := CreateHTTPServer(globalSettings.tcpPort, globalSettings.tcpProtocol, handlerList, logger.GetErrorLogger())
+	httpServer, err := CreateHTTPServer(globalSettings.GetTCPPort(), globalSettings.GetTCPProtocol(), handlerList, logger.GetErrorLogger())
 	if err != 0 {
-		fmt.Fprintf(os.Stdout, "foobar\n")
+		logger.LogError("Failed to start webserver")
 	} else {
 		//start web server
 		httpServer.ServeHTTP()

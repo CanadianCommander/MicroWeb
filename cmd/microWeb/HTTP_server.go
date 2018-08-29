@@ -22,17 +22,17 @@ func CreateHTTPServer(port string, proto string, handlerList []*http.Handler, er
 	srvMux := http.NewServeMux()
 	srvMux.HandleFunc("/", HandleTemplateRequest)
 
-	readTimout, rtErr := time.ParseDuration(globalSettings.httpReadTimeout)
+	readTimout, rtErr := time.ParseDuration(globalSettings.GetHttpReadTimeout())
 	if rtErr != nil {
 		logger.LogError("Could not parse read timeout: %s. defaulting to 1 second",
-			globalSettings.httpReadTimeout)
+			globalSettings.GetHttpReadTimeout())
 		readTimout, _ = time.ParseDuration("1s")
 	}
 
-	writeTimout, wtErr := time.ParseDuration(globalSettings.httpResponseTimeout)
+	writeTimout, wtErr := time.ParseDuration(globalSettings.GetHttpResponseTimeout())
 	if wtErr != nil {
 		logger.LogError("Could not parse response timeout: %s. defaulting to 1 second",
-			globalSettings.httpResponseTimeout)
+			globalSettings.GetHttpResponseTimeout())
 		writeTimout, _ = time.ParseDuration("1s")
 	}
 

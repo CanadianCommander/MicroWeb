@@ -4,8 +4,8 @@
   "staticDirectory": "./exampleWeb/",
   "logFile": "./web.log",
   "logVerbosity": "info",
-  "httpReadTimout": "500ms",
-  "httpResponseTimeout": "500ms",
+  "httpReadTimout": "100ms",
+  "httpResponseTimeout": "100ms",
   "plugins":
     [
       {

@@ -1,4 +1,4 @@
-// cache singleton. (think of this file as a object)
+// cache singleton. (think of this file as a object) (PS Just Found golang sync.Pool in docs....)
 /*
 	call StartCache() to start the cache thread. then use
 		AddToCache, FlushCache, RemoveFromCache and FetchFromCache as necessary
@@ -15,7 +15,7 @@ const (
 	CACHE_CHANNLE_BUFFER_SIZE = 100
 	//if the cache is idle for this period of time, update cache objects
 	CACHE_INACTIVE_UPDATE_TIME = 1 * time.Millisecond
-	//if no cache update has happend in this amount of time, force a cache update
+	//if no cache update has happened in this amount of time, force a cache update
 	//even if the cache is not idle
 	CACHE_UPDATE_INTERVAL_MAX = 1 * time.Second
 	CACHE_OBJECT_TTL          = 60 * time.Second
@@ -120,7 +120,7 @@ func doCacheOp(op CacheChannelMsg) {
 	}
 }
 
-//remove cache items that have out lived ther ttl
+//remove cache items that have out lived there ttl
 func updateTTL() {
 	for key, obj := range cacheMap {
 		if time.Since(obj.timeStamp) > obj.ttl {
