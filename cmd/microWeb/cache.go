@@ -6,8 +6,9 @@
 package main
 
 import (
-	"microWeb/pkg/logger"
 	"time"
+
+	"github.com/CanadianCommander/MicroWeb/pkg/logger"
 )
 
 //cache settings

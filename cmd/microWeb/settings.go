@@ -3,10 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"microWeb/pkg/logger"
 	"os"
 	"path"
 	"sync"
+
+	"github.com/CanadianCommander/MicroWeb/pkg/logger"
 
 	"github.com/fsnotify/fsnotify"
 )

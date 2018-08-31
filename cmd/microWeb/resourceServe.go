@@ -3,18 +3,19 @@ package main
 import (
 	"errors"
 	"html/template"
-	"microWeb/pkg/logger"
 	"net/http"
 	"os"
 	"path"
 	"strings"
 	"time"
+
+	"github.com/CanadianCommander/MicroWeb/pkg/logger"
 )
 
 const FILE_READ_BUFFER_SIZE = 0xFFFF //64 KB
 const TEMPLATE_FILE_EXTENSION = ".gohtml"
 
-func HandleTemplateRequest(res http.ResponseWriter, req *http.Request) {
+func HandleResourceRequest(res http.ResponseWriter, req *http.Request) {
 	serveTime := time.Now()
 	logger.LogVerbose("%s request from %s for URL %s", req.Method, req.RemoteAddr, req.URL)
 

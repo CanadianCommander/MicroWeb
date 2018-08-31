@@ -2,9 +2,9 @@ package main
 
 import (
 	"log"
-	"microWeb/pkg/logger"
-	"net/http"
 	"os"
+
+	"github.com/CanadianCommander/MicroWeb/pkg/logger"
 )
 
 var debugLogger *log.Logger
@@ -32,8 +32,7 @@ func main() {
 	StartCache(0xFFFF)
 
 	//create webserver
-	var handlerList []*http.Handler
-	httpServer, err := CreateHTTPServer(globalSettings.GetTCPPort(), globalSettings.GetTCPProtocol(), handlerList, logger.GetErrorLogger())
+	httpServer, err := CreateHTTPServer(globalSettings.GetTCPPort(), globalSettings.GetTCPProtocol(), logger.GetErrorLogger())
 	if err != 0 {
 		logger.LogError("Failed to start webserver")
 	} else {

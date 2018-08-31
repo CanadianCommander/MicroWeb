@@ -2,10 +2,11 @@ package main
 
 import (
 	"log"
-	"microWeb/pkg/logger"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/CanadianCommander/MicroWeb/pkg/logger"
 )
 
 type HttpServer struct {
@@ -18,9 +19,9 @@ func (svr *HttpServer) ServeHTTP() {
 	svr.server.Serve(svr.tcpListener)
 }
 
-func CreateHTTPServer(port string, proto string, handlerList []*http.Handler, errLogger *log.Logger) (*HttpServer, int) {
+func CreateHTTPServer(port string, proto string, errLogger *log.Logger) (*HttpServer, int) {
 	srvMux := http.NewServeMux()
-	srvMux.HandleFunc("/", HandleTemplateRequest)
+	srvMux.HandleFunc("/", HandleResourceRequest)
 
 	readTimout, rtErr := time.ParseDuration(globalSettings.GetHttpReadTimeout())
 	if rtErr != nil {

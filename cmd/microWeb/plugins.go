@@ -2,11 +2,12 @@ package main
 
 import (
 	"errors"
-	"microWeb/pkg/logger"
 	"net/http"
 	"path"
 	"plugin"
 	"sort"
+
+	"github.com/CanadianCommander/MicroWeb/pkg/logger"
 )
 
 const (
