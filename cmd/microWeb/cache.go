@@ -61,7 +61,16 @@ func StartCache(maxItems int) {
 func AddToCache(cacheType string, name string, object interface{}) {
 	msg := CacheChannelMsg{}
 	msg.operation = func() interface{} {
-		addToCache(cacheType, name, object)
+		addToCache(cacheType, name, globalSettings.GetCacheTTL(), object)
+		return nil
+	}
+	cacheChannel <- msg
+}
+
+func AddToCacheTTLOverride(cacheType string, name string, ttl time.Duration, object interface{}) {
+	msg := CacheChannelMsg{}
+	msg.operation = func() interface{} {
+		addToCache(cacheType, name, ttl, object)
 		return nil
 	}
 	cacheChannel <- msg
@@ -130,13 +139,13 @@ func updateTTL() {
 	}
 }
 
-func createCacheObject(object interface{}) *CacheObject {
-	return &CacheObject{object, time.Now(), CACHE_OBJECT_TTL}
+func createCacheObject(ttl time.Duration, object interface{}) *CacheObject {
+	return &CacheObject{object, time.Now(), ttl}
 }
 
-func addToCache(cacheType string, name string, object interface{}) {
+func addToCache(cacheType string, name string, ttl time.Duration, object interface{}) {
 	if cacheMap[cacheType+name] == nil {
-		cacheMap[cacheType+name] = createCacheObject(object)
+		cacheMap[cacheType+name] = createCacheObject(ttl, object)
 	}
 }
 

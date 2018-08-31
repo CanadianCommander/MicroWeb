@@ -19,7 +19,7 @@ func (svr *HttpServer) ServeHTTP() {
 	svr.server.Serve(svr.tcpListener)
 }
 
-func CreateHTTPServer(port string, proto string, errLogger *log.Logger) (*HttpServer, int) {
+func CreateHTTPServer(port string, proto string, errLogger *log.Logger) (*HttpServer, error) {
 	srvMux := http.NewServeMux()
 	srvMux.HandleFunc("/", HandleResourceRequest)
 
@@ -44,7 +44,13 @@ func CreateHTTPServer(port string, proto string, errLogger *log.Logger) (*HttpSe
 		ErrorLog:     errLogger,
 		ReadTimeout:  readTimout,
 		WriteTimeout: writeTimout}
-	srv.tcpListener, _ = net.Listen(proto, port)
 
-	return &srv, 0
+	var netErr error
+	srv.tcpListener, netErr = net.Listen(proto, port)
+	if netErr != nil {
+		logger.LogError("Failed to create TCP socket using protocol: %s on port: %s", proto, port)
+		return nil, netErr
+	}
+
+	return &srv, nil
 }

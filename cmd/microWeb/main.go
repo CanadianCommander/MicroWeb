@@ -23,7 +23,7 @@ func main() {
 
 	//load settings from cfg file
 	if LoadSettingsFromFile() != nil {
-		logger.LogWarning("Could not load settings from log file")
+		logger.LogWarning("Could not load settings from configuration file")
 	}
 	stopChan := WatchConfigurationFile()
 	defer close(stopChan)
@@ -33,7 +33,7 @@ func main() {
 
 	//create webserver
 	httpServer, err := CreateHTTPServer(globalSettings.GetTCPPort(), globalSettings.GetTCPProtocol(), logger.GetErrorLogger())
-	if err != 0 {
+	if err != nil {
 		logger.LogError("Failed to start webserver")
 	} else {
 		//start web server

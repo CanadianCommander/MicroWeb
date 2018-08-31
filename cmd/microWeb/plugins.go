@@ -6,6 +6,7 @@ import (
 	"path"
 	"plugin"
 	"sort"
+	"time"
 
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
 )
@@ -57,7 +58,9 @@ func LoadTemplatePlugin(path string) (ITemplatePlugin, error) {
 			return nil, errors.New("plugin has incorrect format")
 		}
 
-		AddToCache(CACHE_TEMPLATE_PLUGIN, path, templatePlugin)
+		//NOTE, time.Duration(^(uint64(1) << 63)) sets the ttl of plugins to 290 years ... aka never delete
+		//really should be a MAX_DURATION type constant. If it exists I couldn't find it.
+		AddToCacheTTLOverride(CACHE_TEMPLATE_PLUGIN, path, time.Duration(^(uint64(1) << 63)), templatePlugin)
 		return templatePlugin, nil
 	}
 }

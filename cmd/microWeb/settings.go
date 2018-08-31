@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"sync"
+	"time"
 
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
 
@@ -20,15 +21,21 @@ type pluginBinding struct {
 // all global configuration settings stored here
 // access only through getters
 type global_settings struct {
-	tcpProtocol         string
-	tcpPort             string
-	configFilePath      string
-	staticResourcePath  string
-	logFilePath         string
-	logVerbosity        string
+	//general
+	tcpProtocol        string
+	tcpPort            string
+	configFilePath     string
+	staticResourcePath string
+	logFilePath        string
+	logVerbosity       string
+
+	//tune
 	httpResponseTimeout string
 	httpReadTimeout     string
-	plugins             []pluginBinding
+	cacheTTL            time.Duration
+
+	//plugin
+	plugins []pluginBinding
 }
 
 var globalSettings global_settings
@@ -91,6 +98,13 @@ func (g *global_settings) GetHttpReadTimeout() string {
 	return globalSettings.httpReadTimeout
 }
 
+func (g *global_settings) GetCacheTTL() time.Duration {
+	globalSettingsMutex.Lock()
+	defer globalSettingsMutex.Unlock()
+
+	return globalSettings.cacheTTL
+}
+
 func (g *global_settings) GetPluginList() []pluginBinding {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
@@ -112,16 +126,25 @@ func LoadSettingsFromFile() error {
 	}
 	defer cfgFile.Close()
 
-	// load settings from json
+	// load settings from json. This structure mirrors json
 	type Settings struct {
-		TCPProtocol,
-		TCPPort,
-		StaticDirectory,
-		LogFile,
-		LogVerbosity,
-		HttpReadTimout,
-		HttpResponseTimeout string
-		Plugins []pluginBinding
+		General struct {
+			TCPProtocol,
+			TCPPort,
+			StaticDirectory,
+			LogFile,
+			LogVerbosity string
+		}
+
+		Tune struct {
+			HttpReadTimout,
+			HttpResponseTimeout,
+			CacheTTL string
+		}
+
+		Plugin struct {
+			Plugins []pluginBinding
+		}
 	}
 	cfgFileSettings := Settings{}
 
@@ -134,23 +157,31 @@ func LoadSettingsFromFile() error {
 
 	//apply settings if not overridden by cli args
 	if globalSettings.tcpProtocol == "" {
-		globalSettings.tcpProtocol = cfgFileSettings.TCPProtocol
+		globalSettings.tcpProtocol = cfgFileSettings.General.TCPProtocol
 	}
 	if globalSettings.tcpPort == "" {
-		globalSettings.tcpPort = cfgFileSettings.TCPPort
+		globalSettings.tcpPort = cfgFileSettings.General.TCPPort
 	}
 	if globalSettings.staticResourcePath == "" {
-		globalSettings.staticResourcePath = cfgFileSettings.StaticDirectory
+		globalSettings.staticResourcePath = cfgFileSettings.General.StaticDirectory
 	}
 	if globalSettings.logFilePath == "" {
-		globalSettings.logFilePath = cfgFileSettings.LogFile
+		globalSettings.logFilePath = cfgFileSettings.General.LogFile
 	}
 	if globalSettings.logVerbosity == "" {
-		globalSettings.logVerbosity = cfgFileSettings.LogVerbosity
+		globalSettings.logVerbosity = cfgFileSettings.General.LogVerbosity
 	}
-	globalSettings.httpReadTimeout = cfgFileSettings.HttpReadTimout
-	globalSettings.httpResponseTimeout = cfgFileSettings.HttpResponseTimeout
-	globalSettings.plugins = cfgFileSettings.Plugins
+
+	//set non overridable settings
+	globalSettings.httpReadTimeout = cfgFileSettings.Tune.HttpReadTimout
+	globalSettings.httpResponseTimeout = cfgFileSettings.Tune.HttpResponseTimeout
+	globalSettings.plugins = cfgFileSettings.Plugin.Plugins
+	var durationError error
+	globalSettings.cacheTTL, durationError = time.ParseDuration(cfgFileSettings.Tune.CacheTTL)
+	if durationError != nil {
+		logger.LogWarning("Could not parse cache TTL setting of [%s] defaulting to 60 seconds", cfgFileSettings.Tune.CacheTTL)
+		globalSettings.cacheTTL = 60 * time.Second
+	}
 
 	logger.LogToStdAndFile(logger.VerbosityStringToEnum(globalSettings.logVerbosity), globalSettings.logFilePath)
 	loadSettingsFromFile_LogFinalSettings()
@@ -159,15 +190,21 @@ func LoadSettingsFromFile() error {
 
 func loadSettingsFromFile_LogFinalSettings() {
 	logger.LogVerbose("=== NEW SETTINGS ===")
-	logger.LogVerbose("SETTING: TCP Protocol: %s", globalSettings.tcpProtocol)
-	logger.LogVerbose("SETTING: TCP Port: %s", globalSettings.tcpPort)
-	logger.LogVerbose("SETTING: Static asset directory: %s", globalSettings.staticResourcePath)
-	logger.LogVerbose("SETTING: Log file: %s", globalSettings.logFilePath)
-	logger.LogVerbose("SETTING: Verbosity: %s", globalSettings.logVerbosity)
-	logger.LogVerbose("SETTING: read timeout: %s", globalSettings.httpReadTimeout)
-	logger.LogVerbose("SETTING: response timeout: %s", globalSettings.httpResponseTimeout)
+	logger.LogVerbose("GENERAL:")
+	logger.LogVerbose("\tSETTING: TCP Protocol: %s", globalSettings.tcpProtocol)
+	logger.LogVerbose("\tSETTING: TCP Port: %s", globalSettings.tcpPort)
+	logger.LogVerbose("\tSETTING: Static asset directory: %s", globalSettings.staticResourcePath)
+	logger.LogVerbose("\tSETTING: Log file: %s", globalSettings.logFilePath)
+	logger.LogVerbose("\tSETTING: Verbosity: %s", globalSettings.logVerbosity)
+
+	logger.LogVerbose("TUNE:")
+	logger.LogVerbose("\tSETTING: read timeout: %s", globalSettings.httpReadTimeout)
+	logger.LogVerbose("\tSETTING: response timeout: %s", globalSettings.httpResponseTimeout)
+	logger.LogVerbose("\tSETTING: cache ttl: %d Seconds", globalSettings.cacheTTL/time.Second)
+
+	logger.LogVerbose("PLUGIN:")
 	for _, binding := range globalSettings.plugins {
-		logger.LogVerbose("SETTING: plugin: %s bound to: %s", binding.Plugin, binding.Binding)
+		logger.LogVerbose("\tSETTING: plugin: %s bound to: %s", binding.Plugin, binding.Binding)
 	}
 }
 

@@ -1,20 +1,29 @@
 {
-  "TCPProtocol": "tcp4",
-  "TCPPort": ":8080",
-  "staticDirectory": "./exampleWeb/",
-  "logFile": "./web.log",
-  "logVerbosity": "info",
-  "httpReadTimout": "100ms",
-  "httpResponseTimeout": "100ms",
-  "plugins":
-    [
-      {
-        "binding": "/template/test.gohtml",
-        "plugin":"resource/plugin1/plug1.so"
-      },
-      {
-        "binding": "/template/index.gohtml",
-        "plugin":"resource/plugin2/plug2.so"
-      }
-    ]
+  "general": {
+    "TCPProtocol":      "tcp4",
+    "TCPPort":          ":8080",
+    "staticDirectory":  "./exampleWeb/",
+    "logFile":          "./web.log",
+    "logVerbosity":     "info"
+  },
+
+  "tune": {
+    "httpReadTimout":       "100ms",
+    "httpResponseTimeout":  "100ms",
+    "cacheTTL":             "60s"
+  },
+
+  "plugin": {
+    "plugins":
+      [
+        {
+          "binding": "/template/test.gohtml",
+          "plugin":"resource/plugin1/plug1.so"
+        },
+        {
+          "binding": "/template/",
+          "plugin":"resource/plugin2/plug2.so"
+        }
+      ]
+  }
 }
