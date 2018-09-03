@@ -36,13 +36,13 @@ func ParseArgs() map[string]interface{} {
 	flag.StringVar(argMap["s"].(*string), "static", "", "same as \"-s\"")
 	argMap["static"] = argMap["s"]
 
-	//SSL cert file
-	argMap["sc"] = flag.String("sc", "", "-sc <path to SSL certificate file>")
+	//TLS cert file
+	argMap["sc"] = flag.String("sc", "", "-sc <path to TLS certificate file>")
 	flag.StringVar(argMap["sc"].(*string), "certificate", "", "same as \"-sc\"")
 	argMap["certificate"] = argMap["sc"]
 
-	//SSL key file
-	argMap["sk"] = flag.String("sk", "", "-sk <path to SSL key file>")
+	//TLS key file
+	argMap["sk"] = flag.String("sk", "", "-sk <path to TLS key file>")
 	flag.StringVar(argMap["sk"].(*string), "key", "", "same as \"-sk\"")
 	argMap["key"] = argMap["sk"]
 

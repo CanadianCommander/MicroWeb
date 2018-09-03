@@ -15,7 +15,7 @@ type HttpServer struct {
 }
 
 func (svr *HttpServer) ServeHTTP() {
-	if globalSettings.IsSSLEnabled() {
+	if globalSettings.IsTLSEnabled() {
 		logger.LogInfo("Serving HTTPS on: %s", svr.tcpListener.Addr().String())
 		svr.server.ServeTLS(svr.tcpListener, globalSettings.GetCertFile(), globalSettings.GetKeyFile())
 	} else {

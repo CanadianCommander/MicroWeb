@@ -7,10 +7,10 @@
     "logVerbosity":     "info"
   },
 
-  "ssl": {
-    "enableSSL": false,
-    "certFile": "./resource/sslExample/server.crt",
-    "keyFile": "./resource/sslExample/server.key"
+  "tls": {
+    "enableTLS": false,
+    "certFile": "./resource/tlsExample/server.crt",
+    "keyFile": "./resource/tlsExample/server.key"
   },
 
   "tune": {
