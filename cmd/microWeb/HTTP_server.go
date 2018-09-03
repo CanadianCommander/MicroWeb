@@ -15,8 +15,13 @@ type HttpServer struct {
 }
 
 func (svr *HttpServer) ServeHTTP() {
-	logger.LogInfo("Serving HTTP on: %s", svr.tcpListener.Addr().String())
-	svr.server.Serve(svr.tcpListener)
+	if globalSettings.IsSSLEnabled() {
+		logger.LogInfo("Serving HTTPS on: %s", svr.tcpListener.Addr().String())
+		svr.server.ServeTLS(svr.tcpListener, globalSettings.GetCertFile(), globalSettings.GetKeyFile())
+	} else {
+		logger.LogInfo("Serving HTTP on: %s", svr.tcpListener.Addr().String())
+		svr.server.Serve(svr.tcpListener)
+	}
 }
 
 func CreateHTTPServer(port string, proto string, errLogger *log.Logger) (*HttpServer, error) {

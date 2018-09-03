@@ -7,6 +7,12 @@
     "logVerbosity":     "info"
   },
 
+  "ssl": {
+    "enableSSL": false,
+    "certFile": "./resource/sslExample/server.crt",
+    "keyFile": "./resource/sslExample/server.key"
+  },
+
   "tune": {
     "httpReadTimout":       "100ms",
     "httpResponseTimeout":  "100ms",

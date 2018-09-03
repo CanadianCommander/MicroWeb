@@ -29,6 +29,11 @@ type global_settings struct {
 	logFilePath        string
 	logVerbosity       string
 
+	//ssl
+	sslEnabled bool
+	certFile   string
+	keyFile    string
+
 	//tune
 	httpResponseTimeout string
 	httpReadTimeout     string
@@ -84,6 +89,27 @@ func (g *global_settings) GetLogVerbosityLevel() string {
 	return globalSettings.logVerbosity
 }
 
+func (g *global_settings) IsSSLEnabled() bool {
+	globalSettingsMutex.Lock()
+	defer globalSettingsMutex.Unlock()
+
+	return globalSettings.sslEnabled
+}
+
+func (g *global_settings) GetCertFile() string {
+	globalSettingsMutex.Lock()
+	defer globalSettingsMutex.Unlock()
+
+	return globalSettings.certFile
+}
+
+func (g *global_settings) GetKeyFile() string {
+	globalSettingsMutex.Lock()
+	defer globalSettingsMutex.Unlock()
+
+	return globalSettings.keyFile
+}
+
 func (g *global_settings) GetHttpResponseTimeout() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
@@ -136,6 +162,12 @@ func LoadSettingsFromFile() error {
 			LogVerbosity string
 		}
 
+		SSL struct {
+			EnableSSL bool
+			CertFile,
+			KeyFile string
+		}
+
 		Tune struct {
 			HttpReadTimout,
 			HttpResponseTimeout,
@@ -171,8 +203,15 @@ func LoadSettingsFromFile() error {
 	if globalSettings.logVerbosity == "" {
 		globalSettings.logVerbosity = cfgFileSettings.General.LogVerbosity
 	}
+	if globalSettings.certFile == "" {
+		globalSettings.certFile = cfgFileSettings.SSL.CertFile
+	}
+	if globalSettings.keyFile == "" {
+		globalSettings.keyFile = cfgFileSettings.SSL.KeyFile
+	}
 
 	//set non overridable settings
+	globalSettings.sslEnabled = cfgFileSettings.SSL.EnableSSL
 	globalSettings.httpReadTimeout = cfgFileSettings.Tune.HttpReadTimout
 	globalSettings.httpResponseTimeout = cfgFileSettings.Tune.HttpResponseTimeout
 	globalSettings.plugins = cfgFileSettings.Plugin.Plugins
@@ -196,6 +235,11 @@ func loadSettingsFromFile_LogFinalSettings() {
 	logger.LogVerbose("\tSETTING: Static asset directory: %s", globalSettings.staticResourcePath)
 	logger.LogVerbose("\tSETTING: Log file: %s", globalSettings.logFilePath)
 	logger.LogVerbose("\tSETTING: Verbosity: %s", globalSettings.logVerbosity)
+
+	logger.LogVerbose("SSL:")
+	logger.LogVerbose("\tSETTING: SSL Enabled: %t", globalSettings.sslEnabled)
+	logger.LogVerbose("\tSETTING: SSL Cert file: %s", globalSettings.certFile)
+	logger.LogVerbose("\tSETTING: SSL Key  file: %s", globalSettings.keyFile)
 
 	logger.LogVerbose("TUNE:")
 	logger.LogVerbose("\tSETTING: read timeout: %s", globalSettings.httpReadTimeout)

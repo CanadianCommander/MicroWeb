@@ -36,6 +36,16 @@ func ParseArgs() map[string]interface{} {
 	flag.StringVar(argMap["s"].(*string), "static", "", "same as \"-s\"")
 	argMap["static"] = argMap["s"]
 
+	//SSL cert file
+	argMap["sc"] = flag.String("sc", "", "-sc <path to SSL certificate file>")
+	flag.StringVar(argMap["sc"].(*string), "certificate", "", "same as \"-sc\"")
+	argMap["certificate"] = argMap["sc"]
+
+	//SSL key file
+	argMap["sk"] = flag.String("sk", "", "-sk <path to SSL key file>")
+	flag.StringVar(argMap["sk"].(*string), "key", "", "same as \"-sk\"")
+	argMap["key"] = argMap["sk"]
+
 	flag.Parse()
 
 	return argMap
@@ -59,4 +69,6 @@ func SetCliGlobalSettings(args map[string]interface{}) {
 	globalSettings.staticResourcePath = *args["s"].(*string)
 	globalSettings.logFilePath = *args["l"].(*string)
 	globalSettings.logVerbosity = *args["v"].(*string)
+	globalSettings.certFile = *args["sc"].(*string)
+	globalSettings.keyFile = *args["sk"].(*string)
 }
