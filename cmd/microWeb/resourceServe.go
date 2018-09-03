@@ -2,13 +2,13 @@ package main
 
 import (
 	"errors"
-	"html/template"
 	"net/http"
 	"os"
 	"path"
 	"strings"
 	"time"
 
+	"github.com/CanadianCommander/MicroWeb/pkg/cache"
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
 )
 
@@ -19,68 +19,55 @@ func HandleResourceRequest(res http.ResponseWriter, req *http.Request) {
 	serveTime := time.Now()
 	logger.LogVerbose("%s request from %s for URL %s", req.Method, req.RemoteAddr, req.URL)
 
-	if handleTemplateRequest(res, req) {
+	if handleRequest(res, req) {
 		logger.LogVerbose("Served Request: %s, to %s in %f ms", req.URL.Path, req.RemoteAddr, float64(time.Since(serveTime).Nanoseconds())/1000000.0)
 	} else {
 		logger.LogWarning("failed to serve request, [%s] to %s", req.URL.Path, req.RemoteAddr)
 	}
 }
 
-func handleTemplateRequest(res http.ResponseWriter, req *http.Request) bool {
+func handleRequest(res http.ResponseWriter, req *http.Request) bool {
 
 	fsPath, fsErr := URLToFilesystem(req.URL.Path)
-	if fsErr != nil {
-		logger.LogInfo("Resource not found: %s", req.URL.Path)
-		res.WriteHeader(404)
-		return false
-	}
-
-	if path.Ext(fsPath) == TEMPLATE_FILE_EXTENSION {
-		//read, parse and serve template file
-		pluginToUse, pErr := GetPluginByResourcePath(fsPath)
-		if pErr != nil {
-			logger.LogError("Template file has no plugin associated with it! file: %s", fsPath)
-			res.WriteHeader(500)
+	pluginToUse, pErr := GetPluginByResourcePath(fsPath)
+	if pErr != nil {
+		//no plugin just serve resource raw
+		if fsErr != nil {
+			//file not found
+			logger.LogInfo("Resource not found: %s", req.URL.Path)
+			res.WriteHeader(404)
 			return false
-		}
-		plugin, pErr := LoadTemplatePlugin(pluginToUse)
-		if pErr != nil {
-			logger.LogError("Template plugin failed to load")
-			res.WriteHeader(500)
-			return false
-		}
-
-		buff := ReadFileToBuff(fsPath)
-		if buff != nil {
-			templateParser := template.New("root")
-			_, tErr := templateParser.Parse(string((*buff)[:]))
-			if tErr != nil {
-				logger.LogError("Template Parsing error: %s. template file: %s", tErr.Error(), fsPath)
-				res.WriteHeader(500)
-				return false
-			}
-
-			tData, pErr := plugin.GetTemplateStruct(req)
-			if pErr != nil {
-				logger.LogError("Plugin Triggered abort: %s", pErr.Error())
-				res.WriteHeader(500)
-				return false
-			}
-
-			templateParser.Execute(res, tData)
 		} else {
-			res.WriteHeader(500)
-			return false
+			//read and serve file
+			buff := ReadFileToBuff(fsPath)
+			if buff != nil {
+				res.Write((*buff)[:])
+			} else {
+				res.WriteHeader(500)
+				return false
+			}
 		}
-
 	} else {
-		//read and serve normal file
-		buff := ReadFileToBuff(fsPath)
-		if buff != nil {
-			res.Write((*buff)[:])
-		} else {
+		//push resorce file through plugin
+		plugin, pErr := LoadPlugin(pluginToUse)
+		if pErr != nil {
+			logger.LogError("Plugin failed to load")
 			res.WriteHeader(500)
 			return false
+		}
+
+		if fsErr != nil {
+			// virtual file path
+			return plugin.HandleVirtualRequest(req, res)
+		} else {
+			// real file path
+			buff := ReadFileToBuff(fsPath)
+			if buff != nil {
+				return plugin.HandleRequest(req, res, buff)
+			} else {
+				res.WriteHeader(500)
+				return false
+			}
 		}
 	}
 
@@ -88,7 +75,7 @@ func handleTemplateRequest(res http.ResponseWriter, req *http.Request) bool {
 }
 
 func ReadFileToBuff(fsPath string) *[]byte {
-	cacheBuffer := FetchFromCache(CACHE_RESOURCE, fsPath)
+	cacheBuffer := cache.FetchFromCache(cache.CACHE_RESOURCE, fsPath)
 	if cacheBuffer != nil {
 		//cache hit
 		logger.LogVerbose("Loading resource from cache: %s", fsPath)
@@ -114,7 +101,7 @@ func ReadFileToBuff(fsPath string) *[]byte {
 			byteBufferIndex += bytesOut
 		}
 
-		AddToCache(CACHE_RESOURCE, fsPath, (&byteBuffer))
+		cache.AddToCache(cache.CACHE_RESOURCE, fsPath, (&byteBuffer))
 		return &byteBuffer
 	}
 }

@@ -2,12 +2,12 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"path"
 	"sync"
 	"time"
 
+	"github.com/CanadianCommander/MicroWeb/pkg/cache"
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
 
 	"github.com/fsnotify/fsnotify"
@@ -222,6 +222,8 @@ func LoadSettingsFromFile() error {
 		globalSettings.cacheTTL = 60 * time.Second
 	}
 
+	updatePkgSettings()
+
 	logger.LogToStdAndFile(logger.VerbosityStringToEnum(globalSettings.logVerbosity), globalSettings.logFilePath)
 	loadSettingsFromFile_LogFinalSettings()
 	return nil
@@ -252,6 +254,11 @@ func loadSettingsFromFile_LogFinalSettings() {
 	}
 }
 
+//update external package settings
+func updatePkgSettings() {
+	cache.UpdateCacheTTL(globalSettings.cacheTTL)
+}
+
 /*
 	start watching the configuration file for changes. if it does change realod the settings.
 	returns a done channel, close this channel to stop watching the configuration file
@@ -268,7 +275,6 @@ func WatchConfigurationFile() chan bool {
 		for {
 			select {
 			case event := <-fileWatcher.Events:
-				fmt.Printf("EVENT CODE: %d NAME: %s\n", event.Op, event.Name)
 				if path.Base(event.Name) == path.Base(globalSettings.GetConfigFilePath()) &&
 					event.Op&(fsnotify.Write|fsnotify.Create) > 0 {
 					//some times text editors use a swap file. Instead of writing to the config file they delete it and

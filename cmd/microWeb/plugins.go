@@ -8,64 +8,63 @@ import (
 	"sort"
 	"time"
 
+	"github.com/CanadianCommander/MicroWeb/pkg/cache"
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
 )
 
-const (
-	TEMPLATE_PLUGIN = iota
-	API_PLUGIN
-)
+type IPlugin interface {
+	//called to handle normal resource requests
+	HandleRequest(req *http.Request, res http.ResponseWriter, fileContent *[]byte) bool
 
-type ITemplatePlugin interface {
-	//called once to initialize the plugin.
-	Init()
-	//called before template parsing. this function should return a template structure to be used in said parsing.
-	// if this function returns error the entire request is aborted giving the user a 500 (internal server error)
-	GetTemplateStruct(r *http.Request) (interface{}, error)
+	//called to handle virtual resource requests (a request the does not target a physical file on the server)
+	HandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool
 }
 
-type TemplatePlugin struct {
-	InitFunc              func()
-	GetTemplateStructFunc func(r *http.Request) (interface{}, error)
+type BasicPlugin struct {
+	HandleRequestFunc        func(req *http.Request, res http.ResponseWriter, fileContent *[]byte) bool
+	HandleVirtualRequestFunc func(req *http.Request, res http.ResponseWriter) bool
 }
 
-func (tp *TemplatePlugin) Init() {
-	tp.InitFunc()
+func (tp *BasicPlugin) HandleRequest(req *http.Request, res http.ResponseWriter, fileContent *[]byte) bool {
+	return tp.HandleRequestFunc(req, res, fileContent)
 }
-func (tp *TemplatePlugin) GetTemplateStruct(r *http.Request) (interface{}, error) {
-	return tp.GetTemplateStructFunc(r)
+func (tp *BasicPlugin) HandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool {
+	return tp.HandleVirtualRequestFunc(req, res)
 }
 
-func DefaultTemplatePluginInit() {}
+func DefaultHandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool {
+	res.WriteHeader(404)
+	return false
+}
 
-func LoadTemplatePlugin(path string) (ITemplatePlugin, error) {
-	cachePlugin := FetchFromCache(CACHE_TEMPLATE_PLUGIN, path)
+func LoadPlugin(path string) (IPlugin, error) {
+	cachePlugin := cache.FetchFromCache(cache.CACHE_PLUGIN, path)
 	if cachePlugin != nil {
 		//cache hit
-		templatePlugin := cachePlugin.(ITemplatePlugin)
-		logger.LogVerbose("Loading template plugin from cache: %s", path)
-		return templatePlugin, nil
+		plugin := cachePlugin.(IPlugin)
+		logger.LogVerbose("Loading plugin from cache: %s", path)
+		return plugin, nil
 	} else {
 		//cache miss
-		logger.LogVerbose("Loading template plugin from file: %s", path)
-		plugin, pError := LoadPlugin(path)
+		logger.LogVerbose("Loading plugin from file: %s", path)
+		rawPlugin, pError := _loadPlugin(path)
 		if pError != nil {
 			return nil, pError
 		}
 
-		templatePlugin := ConstructTemplatePlugin(plugin)
-		if templatePlugin == nil {
+		plugin := constructPlugin(rawPlugin)
+		if plugin == nil {
 			return nil, errors.New("plugin has incorrect format")
 		}
 
 		//NOTE, time.Duration(^(uint64(1) << 63)) sets the ttl of plugins to 290 years ... aka never delete
 		//really should be a MAX_DURATION type constant. If it exists I couldn't find it.
-		AddToCacheTTLOverride(CACHE_TEMPLATE_PLUGIN, path, time.Duration(^(uint64(1) << 63)), templatePlugin)
-		return templatePlugin, nil
+		cache.AddToCacheTTLOverride(cache.CACHE_PLUGIN, path, time.Duration(^(uint64(1) << 63)), plugin)
+		return plugin, nil
 	}
 }
 
-func LoadPlugin(path string) (*plugin.Plugin, error) {
+func _loadPlugin(path string) (*plugin.Plugin, error) {
 	newPlugin, pluginError := plugin.Open(path)
 
 	if pluginError != nil {
@@ -76,32 +75,31 @@ func LoadPlugin(path string) (*plugin.Plugin, error) {
 	return newPlugin, nil
 }
 
-func ConstructTemplatePlugin(plugin *plugin.Plugin) ITemplatePlugin {
-	tPlug := TemplatePlugin{}
+func constructPlugin(plugin *plugin.Plugin) IPlugin {
+	NewPlugin := BasicPlugin{}
 
-	initFunc, err := plugin.Lookup("Init")
+	handleReqFunc, err := plugin.Lookup("HandleRequest")
 	if err != nil {
-		logger.LogWarning("Template plugin does not export optional function Init(), using default")
-		initFunc = DefaultTemplatePluginInit
-	}
-	getTemplateFunc, err := plugin.Lookup("GetTemplateStruct")
-	if err != nil {
-		logger.LogError("Template plugin does not export required function 'func GetTemplateStruct(r *http.Request) (interface{}, error)'")
+		logger.LogError("Plugin does not export required function 'func HandleRequest(req *http.Request, res http.ResponseWriter, fileContent *[]byte) bool'")
 		return nil
+	}
+	handleVirtualReqFunc, err := plugin.Lookup("HandleVirtualRequest")
+	if err != nil {
+		logger.LogInfo("Plugin does not export optional function 'func HandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool, using default'")
+		handleVirtualReqFunc = DefaultHandleVirtualRequest
 	}
 
 	var bErr bool
-	tPlug.InitFunc, bErr = initFunc.(func())
+	NewPlugin.HandleRequestFunc, bErr = handleReqFunc.(func(req *http.Request, res http.ResponseWriter, fileContent *[]byte) bool)
 	if !bErr {
-		logger.LogError("Template plugin Init() function does not match template ITemplatePlugin")
-		return nil
+		logger.LogError("Plugin HandleRequest(...) function does not match IPlugin interface")
 	}
-	tPlug.GetTemplateStructFunc, bErr = getTemplateFunc.(func(r *http.Request) (interface{}, error))
+	NewPlugin.HandleVirtualRequestFunc, bErr = handleVirtualReqFunc.(func(req *http.Request, res http.ResponseWriter) bool)
 	if !bErr {
-		logger.LogError("Template plugin GetTemplateStruct() function does not match ITemplatePlugin")
+		logger.LogError("Plugin HandleVirtualRequest(...) function does not match IPlugin interface")
 	}
 
-	return &tPlug
+	return &NewPlugin
 }
 
 //returns the path of the plugin that should be used on the given resource path

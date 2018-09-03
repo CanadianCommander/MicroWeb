@@ -24,11 +24,11 @@
       [
         {
           "binding": "/template/test.gohtml",
-          "plugin":"resource/plugin1/plug1.so"
+          "plugin":"resource/plugin1/plugin1.so"
         },
         {
-          "binding": "/template/",
-          "plugin":"resource/plugin2/plug2.so"
+          "binding": "/template/index.gohtml",
+          "plugin":"resource/plugin2/plugin2.so"
         }
       ]
   }

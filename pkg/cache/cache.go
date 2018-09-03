@@ -1,14 +1,12 @@
-// cache singleton. (think of this file as a object) (PS Just Found golang sync.Pool in docs....)
 /*
 	call StartCache() to start the cache thread. then use
 		AddToCache, FlushCache, RemoveFromCache and FetchFromCache as necessary
 */
-package main
+package cache
 
 import (
+	"sync"
 	"time"
-
-	"github.com/CanadianCommander/MicroWeb/pkg/logger"
 )
 
 //cache settings
@@ -19,14 +17,11 @@ const (
 	//if no cache update has happened in this amount of time, force a cache update
 	//even if the cache is not idle
 	CACHE_UPDATE_INTERVAL_MAX = 1 * time.Second
-	CACHE_OBJECT_TTL          = 60 * time.Second
 )
 
-//cache object "types"
-const (
-	CACHE_RESOURCE        = "static:"
-	CACHE_TEMPLATE_PLUGIN = "tPlugin:"
-	CACHE_API_PLUGIN      = "aPlugin:"
+var cacheSettingsLock sync.Mutex = sync.Mutex{}
+var (
+	CACHE_OBJECT_TTL = 60 * time.Second
 )
 
 var cacheMap map[string]*CacheObject
@@ -54,17 +49,25 @@ func StartCache(maxItems int) {
 	cacheChannel = make(chan CacheChannelMsg, CACHE_CHANNLE_BUFFER_SIZE)
 	cacheMap = make(map[string]*CacheObject)
 
-	logger.LogVerbose("Cache Started")
 	go cacheMain(maxItems, cacheChannel)
 }
 
 func AddToCache(cacheType string, name string, object interface{}) {
 	msg := CacheChannelMsg{}
 	msg.operation = func() interface{} {
-		addToCache(cacheType, name, globalSettings.GetCacheTTL(), object)
+		cacheSettingsLock.Lock()
+		defer cacheSettingsLock.Unlock()
+		addToCache(cacheType, name, CACHE_OBJECT_TTL, object)
 		return nil
 	}
 	cacheChannel <- msg
+}
+
+//set new ttl for cache objects (objects already in cache uneffected)
+func UpdateCacheTTL(newTTL time.Duration) {
+	cacheSettingsLock.Lock()
+	defer cacheSettingsLock.Unlock()
+	CACHE_OBJECT_TTL = newTTL
 }
 
 func AddToCacheTTLOverride(cacheType string, name string, ttl time.Duration, object interface{}) {

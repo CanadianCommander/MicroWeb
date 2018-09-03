@@ -92,18 +92,18 @@ func VerbosityStringToEnum(verbosity string) int {
 }
 
 func LogToStd(verbosity int) {
-	setLoggers(GetStdLogWriters(verbosity))
+	createLoggers(GetStdLogWriters(verbosity))
 }
 
 func LogToFile(verbosity int, logFilePath string) {
-	setLoggers(GetFileLogWriters(verbosity, logFilePath))
+	createLoggers(GetFileLogWriters(verbosity, logFilePath))
 }
 
 func LogToStdAndFile(verbosity int, logFilePath string) {
 	stdWriters := GetStdLogWriters(verbosity)
 	fileWriters := GetFileLogWriters(verbosity, logFilePath)
 
-	setLoggers(getMultiWriter(stdWriters, fileWriters))
+	createLoggers(getMultiWriter(stdWriters, fileWriters))
 }
 
 // get stdout io.writers
@@ -153,10 +153,19 @@ func openLogFile(path string) *os.File {
 	return logFile
 }
 
-func setLoggers(logWriters []io.Writer) {
+func createLoggers(logWriters []io.Writer) {
 	logDebug = log.New(logWriters[0], "DEBUG: ", log.Ldate|log.Ltime|log.Lshortfile)
 	logVerbose = log.New(logWriters[1], "VERBOSE: ", log.Ldate|log.Ltime)
 	logInfo = log.New(logWriters[2], "INFO: ", log.Ldate|log.Ltime)
 	logWarning = log.New(logWriters[3], "WARN: ", log.Ldate|log.Ltime|log.Lshortfile)
 	logError = log.New(logWriters[4], "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
+}
+
+//directly set logger pointers to the ones sepcified
+func SetLoggersPtr(debug, verbose, info, warning, lerror *log.Logger) {
+	logDebug = debug
+	logVerbose = verbose
+	logInfo = info
+	logWarning = warning
+	logError = lerror
 }

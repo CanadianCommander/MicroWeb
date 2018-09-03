@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/CanadianCommander/MicroWeb/pkg/cache"
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
 )
 
@@ -29,7 +30,7 @@ func main() {
 	defer close(stopChan)
 
 	//TODO cache settings from file
-	StartCache(0xFFFF)
+	cache.StartCache(0xFFFF)
 
 	//create webserver
 	httpServer, err := CreateHTTPServer(globalSettings.GetTCPPort(), globalSettings.GetTCPProtocol(), logger.GetErrorLogger())

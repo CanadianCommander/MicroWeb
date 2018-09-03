@@ -2,17 +2,18 @@ package main
 
 import (
 	"net/http"
+
+	"github.com/CanadianCommander/MicroWeb/pkg/pluginUtil"
 )
 
 type FOOBAR struct {
 	Msg string
 }
 
-func Init() {
-
-}
-
-func GetTemplateStruct(r *http.Request) (interface{}, error) {
+func HandleRequest(req *http.Request, res http.ResponseWriter, fileContent *[]byte) bool {
 	foobar := FOOBAR{"FOO-BAR"}
-	return foobar, nil
+
+	pluginUtil.ProcessTemplate(fileContent, res, foobar)
+
+	return true
 }
