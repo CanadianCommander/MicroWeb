@@ -49,7 +49,7 @@ type cacheObject struct {
 //-------------------- front end methods --------------------------------
 
 /*
-StartCache starts cache managment thread. CALL THIS FIRST
+StartCache starts cache management thread. CALL THIS FIRST
 */
 func StartCache() {
 	cacheChannel = make(chan cacheChannelMsg, cacheChannelBufferSize)

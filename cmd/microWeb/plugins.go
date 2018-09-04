@@ -24,7 +24,7 @@ type IPlugin interface {
 }
 
 /*
-BasicPlugin a basic implementaiton of the IPlugin interface.
+BasicPlugin a basic implementation of the IPlugin interface.
 */
 type BasicPlugin struct {
 	HandleRequestFunc        func(req *http.Request, res http.ResponseWriter, fileContent *[]byte) bool
