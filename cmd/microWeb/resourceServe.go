@@ -12,11 +12,11 @@ import (
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
 )
 
-const FILE_READ_BUFFER_SIZE = 0xFFFF //64 KB
-const TEMPLATE_FILE_EXTENSION = ".gohtml"
+const fileReadBufferSize = 0xFFFF //64 KB
+const templateFileExt = ".gohtml"
 
 /*
-	HandleRequest is called to handle any and all http requests made by clients
+HandleRequest is called to handle any and all http requests made by clients
 */
 func HandleRequest(res http.ResponseWriter, req *http.Request) {
 	serveTime := time.Now()
@@ -40,16 +40,16 @@ func handleRequest(res http.ResponseWriter, req *http.Request) bool {
 			logger.LogInfo("Resource not found: %s", req.URL.Path)
 			res.WriteHeader(404)
 			return false
-		} else {
-			//read and serve file
-			buff := ReadFileToBuff(fsPath)
-			if buff != nil {
-				res.Write((*buff)[:])
-			} else {
-				res.WriteHeader(500)
-				return false
-			}
 		}
+		//read and serve file
+		buff := ReadFileToBuff(fsPath)
+		if buff != nil {
+			res.Write((*buff)[:])
+		} else {
+			res.WriteHeader(500)
+			return false
+		}
+
 	} else {
 		//push resorce file through plugin
 		plugin, pErr := LoadPlugin(pluginToUse)
@@ -62,63 +62,62 @@ func handleRequest(res http.ResponseWriter, req *http.Request) bool {
 		if fsErr != nil {
 			// virtual file path
 			return plugin.HandleVirtualRequest(req, res)
-		} else {
-			// real file path
-			buff := ReadFileToBuff(fsPath)
-			if buff != nil {
-				return plugin.HandleRequest(req, res, buff)
-			} else {
-				res.WriteHeader(500)
-				return false
-			}
 		}
+
+		// real file path
+		buff := ReadFileToBuff(fsPath)
+		if buff == nil {
+			res.WriteHeader(500)
+			return false
+		}
+
+		return plugin.HandleRequest(req, res, buff)
 	}
 
 	return true
 }
 
 /*
-	ReadFileToBuff reads the enter file found at fsPath in to a []byte buffer and returns it.
-	If any thing goes wrong nil is returned.
+ReadFileToBuff reads the enter file found at fsPath in to a []byte buffer and returns it.
+If any thing goes wrong nil is returned.
 
-	Note. This function uses the global cache provided by the,
-	"github.com/CanadianCommander/MicroWeb/pkg/cache" package.
+Note. This function uses the global cache provided by the,
+"github.com/CanadianCommander/MicroWeb/pkg/cache" package.
 */
 func ReadFileToBuff(fsPath string) *[]byte {
-	cacheBuffer := cache.FetchFromCache(cache.CACHE_RESOURCE, fsPath)
+	cacheBuffer := cache.FetchFromCache(cache.CacheTypeResource, fsPath)
 	if cacheBuffer != nil {
 		//cache hit
 		logger.LogVerbose("Loading resource from cache: %s", fsPath)
 		return cacheBuffer.(*[]byte)
-	} else {
-		//cache miss
-		logger.LogVerbose("Loading resource from file: %s", fsPath)
-		file, err := os.Open(fsPath)
-		defer file.Close()
-		if err != nil {
-			logger.LogError("Could not open resource file at: %s ", fsPath)
-			return nil
-		}
-		fileInfo, _ := file.Stat()
-		byteBuffer := make([]byte, fileInfo.Size())
-
-		bytesOut := 1
-		byteBufferIndex := 0
-		for bytesOut != 0 {
-			var buff []byte = make([]byte, FILE_READ_BUFFER_SIZE)
-			bytesOut, _ = file.Read(buff)
-			copy(byteBuffer[byteBufferIndex:], buff[:bytesOut])
-			byteBufferIndex += bytesOut
-		}
-
-		cache.AddToCache(cache.CACHE_RESOURCE, fsPath, (&byteBuffer))
-		return &byteBuffer
 	}
+	//cache miss
+	logger.LogVerbose("Loading resource from file: %s", fsPath)
+	file, err := os.Open(fsPath)
+	defer file.Close()
+	if err != nil {
+		logger.LogError("Could not open resource file at: %s ", fsPath)
+		return nil
+	}
+	fileInfo, _ := file.Stat()
+	byteBuffer := make([]byte, fileInfo.Size())
+
+	bytesOut := 1
+	byteBufferIndex := 0
+	for bytesOut != 0 {
+		var buff = make([]byte, fileReadBufferSize)
+		bytesOut, _ = file.Read(buff)
+		copy(byteBuffer[byteBufferIndex:], buff[:bytesOut])
+		byteBufferIndex += bytesOut
+	}
+
+	cache.AddToCache(cache.CacheTypeResource, fsPath, (&byteBuffer))
+	return &byteBuffer
 }
 
-/**
-  URLToFilesystem takes a url and resolves it to a file system path, if possible,
-	taking in to account the global setting for static resource path.
+/*
+URLToFilesystem takes a url and resolves it to a file system path, if possible,
+taking in to account the global setting for static resource path.
 */
 func URLToFilesystem(url string) (string, error) {
 	if strings.Compare(url, "/") == 0 {

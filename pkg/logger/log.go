@@ -8,12 +8,13 @@ import (
 	"strings"
 )
 
+//logging verbosity level enum
 const (
-	DEBUG = iota
-	VERBOSE
-	INFO
-	WARN
-	ERROR
+	VDebug = iota
+	VVerbose
+	VInfo
+	VWarn
+	VError
 )
 
 var (
@@ -25,75 +26,75 @@ var (
 )
 
 /*
-	LogDebug outputs the given message to the debug log.
-	It's arguments are the same as fmt.Printf()
+LogDebug outputs the given message to the debug log.
+It's arguments are the same as fmt.Printf()
 */
 func LogDebug(format string, a ...interface{}) {
 	logDebug.Printf(format, a...)
 }
 
 /*
-	LogVerbose outputs the given message to the verbose log.
-	It's arguments are the same as fmt.Printf()
+LogVerbose outputs the given message to the verbose log.
+It's arguments are the same as fmt.Printf()
 */
 func LogVerbose(format string, a ...interface{}) {
 	logVerbose.Printf(format, a...)
 }
 
 /*
-	LogInfo outputs the given message to the info log.
-	It's arguments are the same as fmt.Printf()
+LogInfo outputs the given message to the info log.
+It's arguments are the same as fmt.Printf()
 */
 func LogInfo(format string, a ...interface{}) {
 	logInfo.Printf(format, a...)
 }
 
 /*
-	LogWarning outputs the given message to the warning log.
-	It's arguments are the same as fmt.Printf()
+LogWarning outputs the given message to the warning log.
+It's arguments are the same as fmt.Printf()
 */
 func LogWarning(format string, a ...interface{}) {
 	logWarning.Printf(format, a...)
 }
 
 /*
-	LogError outputs the given message to the error log.
-	It's arguments are the same as fmt.Printf()
+LogError outputs the given message to the error log.
+It's arguments are the same as fmt.Printf()
 */
 func LogError(format string, a ...interface{}) {
 	logError.Printf(format, a...)
 }
 
 /*
-	GetDebugLogger returns the log.Logger object used to output debug messages
+GetDebugLogger returns the log.Logger object used to output debug messages
 */
 func GetDebugLogger() *log.Logger {
 	return logDebug
 }
 
 /*
-	GetVerboseLogger returns the log.Logger object used to output verbose messages
+GetVerboseLogger returns the log.Logger object used to output verbose messages
 */
 func GetVerboseLogger() *log.Logger {
 	return logVerbose
 }
 
 /*
-	GetInfoLogger returns the log.Logger object used to output info messages
+GetInfoLogger returns the log.Logger object used to output info messages
 */
 func GetInfoLogger() *log.Logger {
 	return logInfo
 }
 
 /*
-	GetWarningLogger returns the log.Logger object used to output warning messages
+GetWarningLogger returns the log.Logger object used to output warning messages
 */
 func GetWarningLogger() *log.Logger {
 	return logWarning
 }
 
 /*
-	GetErrorLogger returns the log.Logger object used to output error messages
+GetErrorLogger returns the log.Logger object used to output error messages
 */
 func GetErrorLogger() *log.Logger {
 	return logError
@@ -106,46 +107,46 @@ func (nw *nullWriter) Write(p []byte) (n int, err error) {
 }
 
 /*
-	VerbosityStringToEnum converts a verbosity string in to its enumerator equivalent
+VerbosityStringToEnum converts a verbosity string in to its enumerator equivalent
 */
 func VerbosityStringToEnum(verbosity string) int {
 	verbosity = strings.ToUpper(verbosity)
 	switch verbosity {
 	case "DEBUG":
-		return DEBUG
+		return VDebug
 	case "VERBOSE":
-		return VERBOSE
+		return VVerbose
 	case "INFO":
-		return INFO
+		return VInfo
 	case "WARN":
-		return WARN
+		return VWarn
 	case "WARNING":
-		return WARN
+		return VWarn
 	case "ERROR":
-		return ERROR
+		return VError
 	default:
 		fmt.Printf("ERROR: could not match log level string %s to a log level\n", verbosity)
-		return DEBUG
+		return VDebug
 	}
 }
 
 /*
-	LogToStd, configures the loggers to direct log output to stdout
+LogToStd configures the loggers to direct log output to stdout
 */
 func LogToStd(verbosity int) {
 	createLoggers(getStdLogWriters(verbosity))
 }
 
 /*
-	LogToFile, configures the loggers to output to the given log file. If the file
-	exists, output is appended.
+LogToFile configures the loggers to output to the given log file. If the file
+exists, output is appended.
 */
 func LogToFile(verbosity int, logFilePath string) {
 	createLoggers(getFileLogWriters(verbosity, logFilePath))
 }
 
 /*
-	LogToStdAndFile configures the loggers to output both to stdout and the given log file.
+LogToStdAndFile configures the loggers to output both to stdout and the given log file.
 */
 func LogToStdAndFile(verbosity int, logFilePath string) {
 	stdWriters := getStdLogWriters(verbosity)

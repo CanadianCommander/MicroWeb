@@ -9,15 +9,16 @@ import (
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
 )
 
-type HttpServer struct {
+// HTTPServer contains an, http server + tcp connection all wrapped up in to one struct
+type HTTPServer struct {
 	server      *http.Server
 	tcpListener net.Listener
 }
 
 /*
-	ServeHTTP start the http server. BLOCKS until server exits
+ServeHTTP start the http server. BLOCKS until server exits
 */
-func (svr *HttpServer) ServeHTTP() {
+func (svr *HTTPServer) ServeHTTP() {
 	if globalSettings.IsTLSEnabled() {
 		logger.LogInfo("Serving HTTPS on: %s", svr.tcpListener.Addr().String())
 		svr.server.ServeTLS(svr.tcpListener, globalSettings.GetCertFile(), globalSettings.GetKeyFile())
@@ -28,29 +29,29 @@ func (svr *HttpServer) ServeHTTP() {
 }
 
 /*
-	CreateHTTPServer creates a new http server on the given port,
-	using the given protocol and outputing errors to the given error logger. The created
-	server is returned on success, else (nil, error) is returned
+CreateHTTPServer creates a new http server on the given port,
+using the given protocol and outputing errors to the given error logger. The created
+server is returned on success, else (nil, error) is returned
 */
-func CreateHTTPServer(port string, proto string, errLogger *log.Logger) (*HttpServer, error) {
+func CreateHTTPServer(port string, proto string, errLogger *log.Logger) (*HTTPServer, error) {
 	srvMux := http.NewServeMux()
 	srvMux.HandleFunc("/", HandleRequest)
 
-	readTimout, rtErr := time.ParseDuration(globalSettings.GetHttpReadTimeout())
+	readTimout, rtErr := time.ParseDuration(globalSettings.GetHTTPReadTimeout())
 	if rtErr != nil {
 		logger.LogError("Could not parse read timeout: %s. defaulting to 1 second",
-			globalSettings.GetHttpReadTimeout())
+			globalSettings.GetHTTPReadTimeout())
 		readTimout, _ = time.ParseDuration("1s")
 	}
 
-	writeTimout, wtErr := time.ParseDuration(globalSettings.GetHttpResponseTimeout())
+	writeTimout, wtErr := time.ParseDuration(globalSettings.GetHTTPResponseTimeout())
 	if wtErr != nil {
 		logger.LogError("Could not parse response timeout: %s. defaulting to 1 second",
-			globalSettings.GetHttpResponseTimeout())
+			globalSettings.GetHTTPResponseTimeout())
 		writeTimout, _ = time.ParseDuration("1s")
 	}
 
-	var srv HttpServer
+	var srv HTTPServer
 	srv.server = &http.Server{
 		Addr:         port,
 		Handler:      srvMux,

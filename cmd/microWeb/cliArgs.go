@@ -7,11 +7,11 @@ import (
 )
 
 /*
-	parse cli args found on stdin. using the parsed args populate and return a map, of the format
-	(key, value) (cliFlag, argument)
+ParseArgs parses cli args found on stdin. using the parsed args populate and return a map, of the format
+(key, value) (cliFlag, argument)
 */
 func ParseArgs() map[string]interface{} {
-	var argMap map[string]interface{} = map[string]interface{}{}
+	var argMap = map[string]interface{}{}
 
 	//help
 	argMap["h"] = flag.Bool("h", false, "prints this message")
@@ -53,8 +53,8 @@ func ParseArgs() map[string]interface{} {
 	return argMap
 }
 
-/**
-  Returns true if "-h" option passed or some required arguments are missing else false
+/*
+ShouldAbort returns true if "-h" option passed or some required arguments are missing else false
 */
 func ShouldAbort(args map[string]interface{}) bool {
 	if *args["h"].(*bool) == true {
@@ -67,7 +67,7 @@ func ShouldAbort(args map[string]interface{}) bool {
 }
 
 /*
-	SetCliGlobalSettings sets global settings based on passed cli args
+SetCliGlobalSettings sets global settings based on passed cli args
 */
 func SetCliGlobalSettings(args map[string]interface{}) {
 	globalSettings.configFilePath = *args["c"].(*string)

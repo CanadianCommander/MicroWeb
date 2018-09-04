@@ -5,7 +5,7 @@ import (
 )
 
 /*
-	StringMatchLength calculates the langth of the match between to strings and returns it
+StringMatchLength calculates the langth of the match between to strings and returns it
 */
 func StringMatchLength(s1, s2 string) int {
 	i := 0

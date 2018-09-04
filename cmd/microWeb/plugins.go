@@ -13,7 +13,7 @@ import (
 )
 
 /*
-	generic plugin interface
+IPlugin a generic plugin interface that all plugins must implement (some functions optional)
 */
 type IPlugin interface {
 	//called to handle normal resource requests
@@ -24,7 +24,7 @@ type IPlugin interface {
 }
 
 /*
-	basic implementaiton of the IPlugin interface.
+BasicPlugin a basic implementaiton of the IPlugin interface.
 */
 type BasicPlugin struct {
 	HandleRequestFunc        func(req *http.Request, res http.ResponseWriter, fileContent *[]byte) bool
@@ -32,14 +32,14 @@ type BasicPlugin struct {
 }
 
 /*
-	HandleRequest passes through the function call to a function pointer loaded from the plugins symbol table
+HandleRequest passes through the function call to a function pointer loaded from the plugins symbol table
 */
 func (tp *BasicPlugin) HandleRequest(req *http.Request, res http.ResponseWriter, fileContent *[]byte) bool {
 	return tp.HandleRequestFunc(req, res, fileContent)
 }
 
 /*
-	HandleVirtualRequest passes through the function call to a function pointer loaded from the plugins symbol table
+HandleVirtualRequest passes through the function call to a function pointer loaded from the plugins symbol table
 */
 func (tp *BasicPlugin) HandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool {
 	return tp.HandleVirtualRequestFunc(req, res)
@@ -51,37 +51,38 @@ func defaultHandleVirtualRequest(req *http.Request, res http.ResponseWriter) boo
 }
 
 /*
-	LoadPlugin loades the plugin found at path and constructs it.
-	The constructed plugin is returned as an IPlugin interface on success.
+LoadPlugin loades the plugin found at path and constructs it.
+The constructed plugin is returned as an IPlugin interface on success.
 
-	Note. This function uses caching. Therfore you may receive a pointer to an
-	already initialized plugin
+Note. This function uses caching. Therfore you may receive a pointer to an
+already initialized plugin
 */
 func LoadPlugin(path string) (IPlugin, error) {
-	cachePlugin := cache.FetchFromCache(cache.CACHE_PLUGIN, path)
+	cachePlugin := cache.FetchFromCache(cache.CacheTypePlugin, path)
 	if cachePlugin != nil {
 		//cache hit
 		plugin := cachePlugin.(IPlugin)
 		logger.LogVerbose("Loading plugin from cache: %s", path)
 		return plugin, nil
-	} else {
-		//cache miss
-		logger.LogVerbose("Loading plugin from file: %s", path)
-		rawPlugin, pError := _loadPlugin(path)
-		if pError != nil {
-			return nil, pError
-		}
-
-		plugin := constructPlugin(rawPlugin)
-		if plugin == nil {
-			return nil, errors.New("plugin has incorrect format")
-		}
-
-		//NOTE, time.Duration(^(uint64(1) << 63)) sets the ttl of plugins to 290 years ... aka never delete
-		//really should be a MAX_DURATION type constant. If it exists I couldn't find it.
-		cache.AddToCacheTTLOverride(cache.CACHE_PLUGIN, path, time.Duration(^(uint64(1) << 63)), plugin)
-		return plugin, nil
 	}
+
+	//cache miss
+	logger.LogVerbose("Loading plugin from file: %s", path)
+	rawPlugin, pError := _loadPlugin(path)
+	if pError != nil {
+		return nil, pError
+	}
+
+	plugin := constructPlugin(rawPlugin)
+	if plugin == nil {
+		return nil, errors.New("plugin has incorrect format")
+	}
+
+	//NOTE, time.Duration(^(uint64(1) << 63)) sets the ttl of plugins to 290 years ... aka never delete
+	//really should be a MAX_DURATION type constant. If it exists I couldn't find it.
+	cache.AddToCacheTTLOverride(cache.CacheTypePlugin, path, time.Duration(^(uint64(1) << 63)), plugin)
+	return plugin, nil
+
 }
 
 func _loadPlugin(path string) (*plugin.Plugin, error) {
@@ -123,15 +124,15 @@ func constructPlugin(plugin *plugin.Plugin) IPlugin {
 }
 
 /*
-	GetPluginByResourcePath returns the path of the plugin that has the longest binding
-	match with the given fsPath or an error if no plugin matches at all.
+GetPluginByResourcePath returns the path of the plugin that has the longest binding
+match with the given fsPath or an error if no plugin matches at all.
 
-	Longest match means, given these two bindings
-	/index/
-	/index/web.html
-	the second binding will be selected for fsPath=/index/web.html because it is longer than
-	the match produced by the /index/ binding, while for all othere querys, ex fsPath=/index/foo.html
-	the frist binding will be used.
+Longest match means, given these two bindings
+/index/
+/index/web.html
+the second binding will be selected for fsPath=/index/web.html because it is longer than
+the match produced by the /index/ binding, while for all othere querys, ex fsPath=/index/foo.html
+the frist binding will be used.
 */
 func GetPluginByResourcePath(fsPath string) (string, error) {
 	pluginList := make([]pluginBinding, len(globalSettings.GetPluginList()))

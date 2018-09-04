@@ -20,7 +20,7 @@ type pluginBinding struct {
 
 // all global configuration settings stored here
 // access only through getters
-type global_settings struct {
+type globalSettingsList struct {
 	//general
 	tcpProtocol        string
 	tcpPort            string
@@ -43,12 +43,12 @@ type global_settings struct {
 	plugins []pluginBinding
 }
 
-var globalSettings global_settings
-var globalSettingsMutex sync.Mutex = sync.Mutex{}
+var globalSettings globalSettingsList
+var globalSettingsMutex = sync.Mutex{}
 
 //global settings getters --------------------------
 //GetTCPProtocol returns the current TCP protocol setting
-func (g *global_settings) GetTCPProtocol() string {
+func (g *globalSettingsList) GetTCPProtocol() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
 
@@ -56,7 +56,7 @@ func (g *global_settings) GetTCPProtocol() string {
 }
 
 //GetTCPPort returns the current TCP port setting
-func (g *global_settings) GetTCPPort() string {
+func (g *globalSettingsList) GetTCPPort() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
 
@@ -64,7 +64,7 @@ func (g *global_settings) GetTCPPort() string {
 }
 
 //GetConfigFilePath returns the current configuration file path
-func (g *global_settings) GetConfigFilePath() string {
+func (g *globalSettingsList) GetConfigFilePath() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
 
@@ -72,7 +72,7 @@ func (g *global_settings) GetConfigFilePath() string {
 }
 
 //GetStaticResourcePath returns the current static resource path
-func (g *global_settings) GetStaticResourcePath() string {
+func (g *globalSettingsList) GetStaticResourcePath() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
 
@@ -80,7 +80,7 @@ func (g *global_settings) GetStaticResourcePath() string {
 }
 
 //GetLogFilePath returns the current log file path
-func (g *global_settings) GetLogFilePath() string {
+func (g *globalSettingsList) GetLogFilePath() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
 
@@ -88,7 +88,7 @@ func (g *global_settings) GetLogFilePath() string {
 }
 
 //GetLogVerbosityLevel returns the current logging verbosity level
-func (g *global_settings) GetLogVerbosityLevel() string {
+func (g *globalSettingsList) GetLogVerbosityLevel() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
 
@@ -96,7 +96,7 @@ func (g *global_settings) GetLogVerbosityLevel() string {
 }
 
 //IsTLSEnabled returns true if TLS is enabled
-func (g *global_settings) IsTLSEnabled() bool {
+func (g *globalSettingsList) IsTLSEnabled() bool {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
 
@@ -104,7 +104,7 @@ func (g *global_settings) IsTLSEnabled() bool {
 }
 
 //GetCertFile returns the file system path to the TLS certificate file
-func (g *global_settings) GetCertFile() string {
+func (g *globalSettingsList) GetCertFile() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
 
@@ -112,25 +112,25 @@ func (g *global_settings) GetCertFile() string {
 }
 
 //GetKeyFile returns the file system path to the TLS key file
-func (g *global_settings) GetKeyFile() string {
+func (g *globalSettingsList) GetKeyFile() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
 
 	return globalSettings.keyFile
 }
 
-//GetHttpReadTimeout returns the current http response timeout setting as a string.
+//GetHTTPResponseTimeout returns the current http response timeout setting as a string.
 //use time.ParseDuration() to decode
-func (g *global_settings) GetHttpResponseTimeout() string {
+func (g *globalSettingsList) GetHTTPResponseTimeout() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
 
 	return globalSettings.httpResponseTimeout
 }
 
-//GetHttpReadTimeout returns the current http read timeout setting as a string.
+//GetHTTPReadTimeout returns the current http read timeout setting as a string.
 //use time.ParseDuration() to decode
-func (g *global_settings) GetHttpReadTimeout() string {
+func (g *globalSettingsList) GetHTTPReadTimeout() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
 
@@ -138,7 +138,7 @@ func (g *global_settings) GetHttpReadTimeout() string {
 }
 
 //GetCacheTTL returns the current cache TTL setting
-func (g *global_settings) GetCacheTTL() time.Duration {
+func (g *globalSettingsList) GetCacheTTL() time.Duration {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
 
@@ -146,7 +146,7 @@ func (g *global_settings) GetCacheTTL() time.Duration {
 }
 
 //GetPluginList returns a list of current plugin bindings
-func (g *global_settings) GetPluginList() []pluginBinding {
+func (g *globalSettingsList) GetPluginList() []pluginBinding {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
 
@@ -157,8 +157,8 @@ func (g *global_settings) GetPluginList() []pluginBinding {
 }
 
 /*
-	LoadSettingsFromFile loads configuration settings from a json setting file. The path to said file
-	is pulled from globalSettings.configFilePath (set through cli arguments)
+LoadSettingsFromFile loads configuration settings from a json setting file. The path to said file
+is pulled from globalSettings.configFilePath (set through cli arguments)
 */
 func LoadSettingsFromFile() error {
 	globalSettingsMutex.Lock()
@@ -188,8 +188,8 @@ func LoadSettingsFromFile() error {
 		}
 
 		Tune struct {
-			HttpReadTimout,
-			HttpResponseTimeout,
+			HTTPReadTimout,
+			HTTPResponseTimeout,
 			CacheTTL string
 		}
 
@@ -231,8 +231,8 @@ func LoadSettingsFromFile() error {
 
 	//set non overridable settings
 	globalSettings.tlsEnabled = cfgFileSettings.TLS.EnableTLS
-	globalSettings.httpReadTimeout = cfgFileSettings.Tune.HttpReadTimout
-	globalSettings.httpResponseTimeout = cfgFileSettings.Tune.HttpResponseTimeout
+	globalSettings.httpReadTimeout = cfgFileSettings.Tune.HTTPReadTimout
+	globalSettings.httpResponseTimeout = cfgFileSettings.Tune.HTTPResponseTimeout
 	globalSettings.plugins = cfgFileSettings.Plugin.Plugins
 	var durationError error
 	globalSettings.cacheTTL, durationError = time.ParseDuration(cfgFileSettings.Tune.CacheTTL)
@@ -244,11 +244,11 @@ func LoadSettingsFromFile() error {
 	updatePkgSettings()
 
 	logger.LogToStdAndFile(logger.VerbosityStringToEnum(globalSettings.logVerbosity), globalSettings.logFilePath)
-	loadSettingsFromFile_LogFinalSettings()
+	loadSettingsFromFileLogFinalSettings()
 	return nil
 }
 
-func loadSettingsFromFile_LogFinalSettings() {
+func loadSettingsFromFileLogFinalSettings() {
 	logger.LogVerbose("=== NEW SETTINGS ===")
 	logger.LogVerbose("GENERAL:")
 	logger.LogVerbose("\tSETTING: TCP Protocol: %s", globalSettings.tcpProtocol)
@@ -279,8 +279,8 @@ func updatePkgSettings() {
 }
 
 /*
-	WatchConfigurationFile starts watching the configuration file for changes. if it does change, realod the settings.
-	returns a done channel, close this channel to stop watching the configuration file
+WatchConfigurationFile starts watching the configuration file for changes. if it does change, realod the settings.
+returns a done channel, close this channel to stop watching the configuration file
 */
 func WatchConfigurationFile() chan bool {
 	doneChan := make(chan bool)

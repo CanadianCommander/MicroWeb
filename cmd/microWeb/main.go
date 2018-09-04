@@ -12,7 +12,7 @@ var debugLogger *log.Logger
 
 func main() {
 	//build loggers
-	logger.LogToStd(logger.DEBUG)
+	logger.LogToStd(logger.VDebug)
 
 	//parse cli arguments
 	cliArguments := ParseArgs()

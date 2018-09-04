@@ -2,6 +2,6 @@ package cache
 
 //cache object "types"
 const (
-	CACHE_RESOURCE = "static:"
-	CACHE_PLUGIN   = "Plugin:"
+	CacheTypeResource = "static:"
+	CacheTypePlugin   = "Plugin:"
 )
