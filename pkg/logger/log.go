@@ -179,7 +179,7 @@ func getMultiWriter(writer1 []io.Writer, writer2 []io.Writer) []io.Writer {
 	return multiWriters
 }
 
-// get os.File writers for stdout output
+// get writers for the target with respect for verbosity level
 func getWriters(verbosity int, target io.Writer) []io.Writer {
 	if target == nil {
 		target = &nullWriter{}
