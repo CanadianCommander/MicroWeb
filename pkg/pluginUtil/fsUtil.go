@@ -11,6 +11,13 @@ import (
 
 const FILE_READ_BUFFER_SIZE = 0xFFFF //64 KB
 
+/*
+	ReadFileToBuff reads the enter file found at fsPath in to a []byte buffer and returns it.
+	If any thing goes wrong nil is returned.
+
+	Note. This function uses the global cache provided by the,
+	"github.com/CanadianCommander/MicroWeb/pkg/cache" package.
+*/
 func ReadFileToBuff(fsPath string) *[]byte {
 	cacheBuffer := cache.FetchFromCache(cache.CACHE_RESOURCE, fsPath)
 	if cacheBuffer != nil {
@@ -43,6 +50,10 @@ func ReadFileToBuff(fsPath string) *[]byte {
 	}
 }
 
+/*
+	ProcessTemplate takes the template described by templateFileBuffer and uses the html/template
+	package to parse and execute the template, pushing output on the, out io.Writer.
+*/
 func ProcessTemplate(templateFileBuffer *[]byte, out io.Writer, tStruct interface{}) error {
 	templateParser := template.New("root")
 	_, tErr := templateParser.Parse(string((*templateFileBuffer)[:]))

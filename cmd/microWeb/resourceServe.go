@@ -15,7 +15,10 @@ import (
 const FILE_READ_BUFFER_SIZE = 0xFFFF //64 KB
 const TEMPLATE_FILE_EXTENSION = ".gohtml"
 
-func HandleResourceRequest(res http.ResponseWriter, req *http.Request) {
+/*
+	HandleRequest is called to handle any and all http requests made by clients
+*/
+func HandleRequest(res http.ResponseWriter, req *http.Request) {
 	serveTime := time.Now()
 	logger.LogVerbose("%s request from %s for URL %s", req.Method, req.RemoteAddr, req.URL)
 
@@ -74,6 +77,13 @@ func handleRequest(res http.ResponseWriter, req *http.Request) bool {
 	return true
 }
 
+/*
+	ReadFileToBuff reads the enter file found at fsPath in to a []byte buffer and returns it.
+	If any thing goes wrong nil is returned.
+
+	Note. This function uses the global cache provided by the,
+	"github.com/CanadianCommander/MicroWeb/pkg/cache" package.
+*/
 func ReadFileToBuff(fsPath string) *[]byte {
 	cacheBuffer := cache.FetchFromCache(cache.CACHE_RESOURCE, fsPath)
 	if cacheBuffer != nil {
@@ -107,7 +117,8 @@ func ReadFileToBuff(fsPath string) *[]byte {
 }
 
 /**
-  takes a url and resolves it to a file system path, if possible.
+  URLToFilesystem takes a url and resolves it to a file system path, if possible,
+	taking in to account the global setting for static resource path.
 */
 func URLToFilesystem(url string) (string, error) {
 	if strings.Compare(url, "/") == 0 {

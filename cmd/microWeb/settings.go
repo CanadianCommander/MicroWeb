@@ -47,6 +47,7 @@ var globalSettings global_settings
 var globalSettingsMutex sync.Mutex = sync.Mutex{}
 
 //global settings getters --------------------------
+//GetTCPProtocol returns the current TCP protocol setting
 func (g *global_settings) GetTCPProtocol() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
@@ -54,6 +55,7 @@ func (g *global_settings) GetTCPProtocol() string {
 	return globalSettings.tcpProtocol
 }
 
+//GetTCPPort returns the current TCP port setting
 func (g *global_settings) GetTCPPort() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
@@ -61,6 +63,7 @@ func (g *global_settings) GetTCPPort() string {
 	return globalSettings.tcpPort
 }
 
+//GetConfigFilePath returns the current configuration file path
 func (g *global_settings) GetConfigFilePath() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
@@ -68,6 +71,7 @@ func (g *global_settings) GetConfigFilePath() string {
 	return globalSettings.configFilePath
 }
 
+//GetStaticResourcePath returns the current static resource path
 func (g *global_settings) GetStaticResourcePath() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
@@ -75,6 +79,7 @@ func (g *global_settings) GetStaticResourcePath() string {
 	return globalSettings.staticResourcePath
 }
 
+//GetLogFilePath returns the current log file path
 func (g *global_settings) GetLogFilePath() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
@@ -82,6 +87,7 @@ func (g *global_settings) GetLogFilePath() string {
 	return globalSettings.logFilePath
 }
 
+//GetLogVerbosityLevel returns the current logging verbosity level
 func (g *global_settings) GetLogVerbosityLevel() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
@@ -89,6 +95,7 @@ func (g *global_settings) GetLogVerbosityLevel() string {
 	return globalSettings.logVerbosity
 }
 
+//IsTLSEnabled returns true if TLS is enabled
 func (g *global_settings) IsTLSEnabled() bool {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
@@ -96,6 +103,7 @@ func (g *global_settings) IsTLSEnabled() bool {
 	return globalSettings.tlsEnabled
 }
 
+//GetCertFile returns the file system path to the TLS certificate file
 func (g *global_settings) GetCertFile() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
@@ -103,6 +111,7 @@ func (g *global_settings) GetCertFile() string {
 	return globalSettings.certFile
 }
 
+//GetKeyFile returns the file system path to the TLS key file
 func (g *global_settings) GetKeyFile() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
@@ -110,6 +119,8 @@ func (g *global_settings) GetKeyFile() string {
 	return globalSettings.keyFile
 }
 
+//GetHttpReadTimeout returns the current http response timeout setting as a string.
+//use time.ParseDuration() to decode
 func (g *global_settings) GetHttpResponseTimeout() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
@@ -117,6 +128,8 @@ func (g *global_settings) GetHttpResponseTimeout() string {
 	return globalSettings.httpResponseTimeout
 }
 
+//GetHttpReadTimeout returns the current http read timeout setting as a string.
+//use time.ParseDuration() to decode
 func (g *global_settings) GetHttpReadTimeout() string {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
@@ -124,6 +137,7 @@ func (g *global_settings) GetHttpReadTimeout() string {
 	return globalSettings.httpReadTimeout
 }
 
+//GetCacheTTL returns the current cache TTL setting
 func (g *global_settings) GetCacheTTL() time.Duration {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
@@ -131,6 +145,7 @@ func (g *global_settings) GetCacheTTL() time.Duration {
 	return globalSettings.cacheTTL
 }
 
+//GetPluginList returns a list of current plugin bindings
 func (g *global_settings) GetPluginList() []pluginBinding {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
@@ -141,6 +156,10 @@ func (g *global_settings) GetPluginList() []pluginBinding {
 	return outList
 }
 
+/*
+	LoadSettingsFromFile loads configuration settings from a json setting file. The path to said file
+	is pulled from globalSettings.configFilePath (set through cli arguments)
+*/
 func LoadSettingsFromFile() error {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
@@ -260,7 +279,7 @@ func updatePkgSettings() {
 }
 
 /*
-	start watching the configuration file for changes. if it does change realod the settings.
+	WatchConfigurationFile starts watching the configuration file for changes. if it does change, realod the settings.
 	returns a done channel, close this channel to stop watching the configuration file
 */
 func WatchConfigurationFile() chan bool {

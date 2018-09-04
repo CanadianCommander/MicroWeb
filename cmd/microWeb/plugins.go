@@ -12,6 +12,9 @@ import (
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
 )
 
+/*
+	generic plugin interface
+*/
 type IPlugin interface {
 	//called to handle normal resource requests
 	HandleRequest(req *http.Request, res http.ResponseWriter, fileContent *[]byte) bool
@@ -20,23 +23,40 @@ type IPlugin interface {
 	HandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool
 }
 
+/*
+	basic implementaiton of the IPlugin interface.
+*/
 type BasicPlugin struct {
 	HandleRequestFunc        func(req *http.Request, res http.ResponseWriter, fileContent *[]byte) bool
 	HandleVirtualRequestFunc func(req *http.Request, res http.ResponseWriter) bool
 }
 
+/*
+	HandleRequest passes through the function call to a function pointer loaded from the plugins symbol table
+*/
 func (tp *BasicPlugin) HandleRequest(req *http.Request, res http.ResponseWriter, fileContent *[]byte) bool {
 	return tp.HandleRequestFunc(req, res, fileContent)
 }
+
+/*
+	HandleVirtualRequest passes through the function call to a function pointer loaded from the plugins symbol table
+*/
 func (tp *BasicPlugin) HandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool {
 	return tp.HandleVirtualRequestFunc(req, res)
 }
 
-func DefaultHandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool {
+func defaultHandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool {
 	res.WriteHeader(404)
 	return false
 }
 
+/*
+	LoadPlugin loades the plugin found at path and constructs it.
+	The constructed plugin is returned as an IPlugin interface on success.
+
+	Note. This function uses caching. Therfore you may receive a pointer to an
+	already initialized plugin
+*/
 func LoadPlugin(path string) (IPlugin, error) {
 	cachePlugin := cache.FetchFromCache(cache.CACHE_PLUGIN, path)
 	if cachePlugin != nil {
@@ -86,7 +106,7 @@ func constructPlugin(plugin *plugin.Plugin) IPlugin {
 	handleVirtualReqFunc, err := plugin.Lookup("HandleVirtualRequest")
 	if err != nil {
 		logger.LogInfo("Plugin does not export optional function 'func HandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool, using default'")
-		handleVirtualReqFunc = DefaultHandleVirtualRequest
+		handleVirtualReqFunc = defaultHandleVirtualRequest
 	}
 
 	var bErr bool
@@ -102,7 +122,17 @@ func constructPlugin(plugin *plugin.Plugin) IPlugin {
 	return &NewPlugin
 }
 
-//returns the path of the plugin that should be used on the given resource path
+/*
+	GetPluginByResourcePath returns the path of the plugin that has the longest binding
+	match with the given fsPath or an error if no plugin matches at all.
+
+	Longest match means, given these two bindings
+	/index/
+	/index/web.html
+	the second binding will be selected for fsPath=/index/web.html because it is longer than
+	the match produced by the /index/ binding, while for all othere querys, ex fsPath=/index/foo.html
+	the frist binding will be used.
+*/
 func GetPluginByResourcePath(fsPath string) (string, error) {
 	pluginList := make([]pluginBinding, len(globalSettings.GetPluginList()))
 	copy(pluginList[:], globalSettings.GetPluginList()[:])
@@ -120,5 +150,5 @@ func GetPluginByResourcePath(fsPath string) (string, error) {
 		}
 	}
 
-	return "FOOBAR", errors.New("No Plugin found for given path: " + fsPath)
+	return "", errors.New("No Plugin found for given path: " + fsPath)
 }

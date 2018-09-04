@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/CanadianCommander/MicroWeb/pkg/pluginUtil"
@@ -15,5 +16,10 @@ func HandleRequest(req *http.Request, res http.ResponseWriter, fileContent *[]by
 
 	pluginUtil.ProcessTemplate(fileContent, res, foobar)
 
+	return true
+}
+
+func HandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool {
+	fmt.Fprint(res, "HELLO FROM AN API FUNCTION!")
 	return true
 }

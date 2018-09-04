@@ -6,8 +6,10 @@ import (
 	"os"
 )
 
-const HELP_MSG = "%s [-h | --help] [-v | --verbosity] [-s | --static] [-c | --config]\n"
-
+/*
+	parse cli args found on stdin. using the parsed args populate and return a map, of the format
+	(key, value) (cliFlag, argument)
+*/
 func ParseArgs() map[string]interface{} {
 	var argMap map[string]interface{} = map[string]interface{}{}
 
@@ -56,7 +58,7 @@ func ParseArgs() map[string]interface{} {
 */
 func ShouldAbort(args map[string]interface{}) bool {
 	if *args["h"].(*bool) == true {
-		fmt.Printf(HELP_MSG, os.Args[0])
+		fmt.Printf("%s [-h | --help] [-v | --verbosity] [-s | --static] [-c | --config]\n", os.Args[0])
 		flag.PrintDefaults()
 		return true
 	}
@@ -64,6 +66,9 @@ func ShouldAbort(args map[string]interface{}) bool {
 	return false
 }
 
+/*
+	SetCliGlobalSettings sets global settings based on passed cli args
+*/
 func SetCliGlobalSettings(args map[string]interface{}) {
 	globalSettings.configFilePath = *args["c"].(*string)
 	globalSettings.staticResourcePath = *args["s"].(*string)

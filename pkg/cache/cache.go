@@ -1,4 +1,5 @@
 /*
+  a simple global cache
 	call StartCache() to start the cache thread. then use
 		AddToCache, FlushCache, RemoveFromCache and FetchFromCache as necessary
 */
@@ -19,6 +20,7 @@ const (
 	CACHE_UPDATE_INTERVAL_MAX = 1 * time.Second
 )
 
+// variable cache settings
 var cacheSettingsLock sync.Mutex = sync.Mutex{}
 var (
 	CACHE_OBJECT_TTL = 60 * time.Second
@@ -45,13 +47,19 @@ type CacheObject struct {
 }
 
 //-------------------- front end methods --------------------------------
-func StartCache(maxItems int) {
+/*
+	start cache managment thread. CALL THIS FIRST
+*/
+func StartCache() {
 	cacheChannel = make(chan CacheChannelMsg, CACHE_CHANNLE_BUFFER_SIZE)
 	cacheMap = make(map[string]*CacheObject)
 
-	go cacheMain(maxItems, cacheChannel)
+	go cacheMain(cacheChannel)
 }
 
+/*
+	AddToCache caches a object under the given cacheType + name combination.
+*/
 func AddToCache(cacheType string, name string, object interface{}) {
 	msg := CacheChannelMsg{}
 	msg.operation = func() interface{} {
@@ -63,13 +71,9 @@ func AddToCache(cacheType string, name string, object interface{}) {
 	cacheChannel <- msg
 }
 
-//set new ttl for cache objects (objects already in cache uneffected)
-func UpdateCacheTTL(newTTL time.Duration) {
-	cacheSettingsLock.Lock()
-	defer cacheSettingsLock.Unlock()
-	CACHE_OBJECT_TTL = newTTL
-}
-
+/*
+	AddToCacheTTLOverride is like AddToCache but allows overriding of global ttl value.
+*/
 func AddToCacheTTLOverride(cacheType string, name string, ttl time.Duration, object interface{}) {
 	msg := CacheChannelMsg{}
 	msg.operation = func() interface{} {
@@ -79,6 +83,18 @@ func AddToCacheTTLOverride(cacheType string, name string, ttl time.Duration, obj
 	cacheChannel <- msg
 }
 
+/*
+	UpdateCacheTTL set a new ttl for cache objects (objects already in cache uneffected)
+*/
+func UpdateCacheTTL(newTTL time.Duration) {
+	cacheSettingsLock.Lock()
+	defer cacheSettingsLock.Unlock()
+	CACHE_OBJECT_TTL = newTTL
+}
+
+/*
+	FlushCache removes all objects from the cache
+*/
 func FlushCache() {
 	msg := CacheChannelMsg{}
 	msg.operation = func() interface{} {
@@ -88,6 +104,9 @@ func FlushCache() {
 	cacheChannel <- msg
 }
 
+/*
+	RemoveFromCache removes the object denoted by cacheType + name from the cache.
+*/
 func RemoveFromCache(cacheType string, name string) {
 	msg := CacheChannelMsg{}
 	msg.operation = func() interface{} {
@@ -97,6 +116,10 @@ func RemoveFromCache(cacheType string, name string) {
 	cacheChannel <- msg
 }
 
+/*
+	FetchFromCache attempts to fetch the object denoted by cacheType + name from the cache.
+	If such an object does not exist in the cache nil is returned.
+*/
 func FetchFromCache(cacheType string, name string) interface{} {
 	msg := CacheChannelMsg{}
 	msg.operation = func() interface{} {
@@ -108,7 +131,7 @@ func FetchFromCache(cacheType string, name string) interface{} {
 }
 
 // ------------------------- back end methods -----------------------------------
-func cacheMain(maxItems int, cacheChan <-chan CacheChannelMsg) {
+func cacheMain(cacheChan <-chan CacheChannelMsg) {
 	lstUpdateTime := time.Now()
 	for {
 		select {

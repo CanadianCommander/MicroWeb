@@ -14,6 +14,9 @@ type HttpServer struct {
 	tcpListener net.Listener
 }
 
+/*
+	ServeHTTP start the http server. BLOCKS until server exits
+*/
 func (svr *HttpServer) ServeHTTP() {
 	if globalSettings.IsTLSEnabled() {
 		logger.LogInfo("Serving HTTPS on: %s", svr.tcpListener.Addr().String())
@@ -24,9 +27,14 @@ func (svr *HttpServer) ServeHTTP() {
 	}
 }
 
+/*
+	CreateHTTPServer creates a new http server on the given port,
+	using the given protocol and outputing errors to the given error logger. The created
+	server is returned on success, else (nil, error) is returned
+*/
 func CreateHTTPServer(port string, proto string, errLogger *log.Logger) (*HttpServer, error) {
 	srvMux := http.NewServeMux()
-	srvMux.HandleFunc("/", HandleResourceRequest)
+	srvMux.HandleFunc("/", HandleRequest)
 
 	readTimout, rtErr := time.ParseDuration(globalSettings.GetHttpReadTimeout())
 	if rtErr != nil {

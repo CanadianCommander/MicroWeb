@@ -24,42 +24,77 @@ var (
 	logError *log.Logger
 )
 
+/*
+	LogDebug outputs the given message to the debug log.
+	It's arguments are the same as fmt.Printf()
+*/
 func LogDebug(format string, a ...interface{}) {
 	logDebug.Printf(format, a...)
 }
 
+/*
+	LogVerbose outputs the given message to the verbose log.
+	It's arguments are the same as fmt.Printf()
+*/
 func LogVerbose(format string, a ...interface{}) {
 	logVerbose.Printf(format, a...)
 }
 
+/*
+	LogInfo outputs the given message to the info log.
+	It's arguments are the same as fmt.Printf()
+*/
 func LogInfo(format string, a ...interface{}) {
 	logInfo.Printf(format, a...)
 }
 
+/*
+	LogWarning outputs the given message to the warning log.
+	It's arguments are the same as fmt.Printf()
+*/
 func LogWarning(format string, a ...interface{}) {
 	logWarning.Printf(format, a...)
 }
 
+/*
+	LogError outputs the given message to the error log.
+	It's arguments are the same as fmt.Printf()
+*/
 func LogError(format string, a ...interface{}) {
 	logError.Printf(format, a...)
 }
 
+/*
+	GetDebugLogger returns the log.Logger object used to output debug messages
+*/
 func GetDebugLogger() *log.Logger {
 	return logDebug
 }
 
+/*
+	GetVerboseLogger returns the log.Logger object used to output verbose messages
+*/
 func GetVerboseLogger() *log.Logger {
 	return logVerbose
 }
 
+/*
+	GetInfoLogger returns the log.Logger object used to output info messages
+*/
 func GetInfoLogger() *log.Logger {
 	return logInfo
 }
 
+/*
+	GetWarningLogger returns the log.Logger object used to output warning messages
+*/
 func GetWarningLogger() *log.Logger {
 	return logWarning
 }
 
+/*
+	GetErrorLogger returns the log.Logger object used to output error messages
+*/
 func GetErrorLogger() *log.Logger {
 	return logError
 }
@@ -70,6 +105,9 @@ func (nw *nullWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+/*
+	VerbosityStringToEnum converts a verbosity string in to its enumerator equivalent
+*/
 func VerbosityStringToEnum(verbosity string) int {
 	verbosity = strings.ToUpper(verbosity)
 	switch verbosity {
@@ -91,27 +129,37 @@ func VerbosityStringToEnum(verbosity string) int {
 	}
 }
 
+/*
+	LogToStd, configures the loggers to direct log output to stdout
+*/
 func LogToStd(verbosity int) {
-	createLoggers(GetStdLogWriters(verbosity))
+	createLoggers(getStdLogWriters(verbosity))
 }
 
+/*
+	LogToFile, configures the loggers to output to the given log file. If the file
+	exists, output is appended.
+*/
 func LogToFile(verbosity int, logFilePath string) {
-	createLoggers(GetFileLogWriters(verbosity, logFilePath))
+	createLoggers(getFileLogWriters(verbosity, logFilePath))
 }
 
+/*
+	LogToStdAndFile configures the loggers to output both to stdout and the given log file.
+*/
 func LogToStdAndFile(verbosity int, logFilePath string) {
-	stdWriters := GetStdLogWriters(verbosity)
-	fileWriters := GetFileLogWriters(verbosity, logFilePath)
+	stdWriters := getStdLogWriters(verbosity)
+	fileWriters := getFileLogWriters(verbosity, logFilePath)
 
 	createLoggers(getMultiWriter(stdWriters, fileWriters))
 }
 
 // get stdout io.writers
-func GetStdLogWriters(verbosity int) []io.Writer {
+func getStdLogWriters(verbosity int) []io.Writer {
 	return getWriters(verbosity, os.Stdout)
 }
 
-func GetFileLogWriters(verbosity int, filePath string) []io.Writer {
+func getFileLogWriters(verbosity int, filePath string) []io.Writer {
 	logFile := openLogFile(filePath)
 	if logFile == nil {
 		fmt.Printf("Cannot Open log file at path: %s \n", filePath)
@@ -159,13 +207,4 @@ func createLoggers(logWriters []io.Writer) {
 	logInfo = log.New(logWriters[2], "INFO: ", log.Ldate|log.Ltime)
 	logWarning = log.New(logWriters[3], "WARN: ", log.Ldate|log.Ltime|log.Lshortfile)
 	logError = log.New(logWriters[4], "ERROR: ", log.Ldate|log.Ltime|log.Lshortfile)
-}
-
-//directly set logger pointers to the ones sepcified
-func SetLoggersPtr(debug, verbose, info, warning, lerror *log.Logger) {
-	logDebug = debug
-	logVerbose = verbose
-	logInfo = info
-	logWarning = warning
-	logError = lerror
 }

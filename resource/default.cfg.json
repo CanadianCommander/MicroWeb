@@ -23,7 +23,7 @@
     "plugins":
       [
         {
-          "binding": "/template/test.gohtml",
+          "binding": "/api/",
           "plugin":"resource/plugin1/plugin1.so"
         },
         {
