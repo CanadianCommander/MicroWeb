@@ -52,10 +52,12 @@ type cacheObject struct {
 StartCache starts cache management thread. CALL THIS FIRST
 */
 func StartCache() {
-	cacheChannel = make(chan cacheChannelMsg, cacheChannelBufferSize)
-	cacheMap = make(map[string]*cacheObject)
+	if cacheChannel == nil {
+		cacheChannel = make(chan cacheChannelMsg, cacheChannelBufferSize)
+		cacheMap = make(map[string]*cacheObject)
 
-	go cacheMain(cacheChannel)
+		go cacheMain(cacheChannel)
+	}
 }
 
 /*
@@ -159,10 +161,15 @@ func doCacheOp(op cacheChannelMsg) {
 
 //remove cache items that have out lived there ttl
 func updateTTL() {
+	delList := make([]string, 0)
 	for key, obj := range cacheMap {
 		if time.Since(obj.timeStamp) > obj.ttl {
-			delete(cacheMap, key)
+			delList = append(delList, key)
 		}
+	}
+
+	for _, key := range delList {
+		delete(cacheMap, key)
 	}
 }
 
