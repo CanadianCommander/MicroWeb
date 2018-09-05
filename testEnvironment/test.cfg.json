@@ -1,0 +1,31 @@
+{
+  "general": {
+    "TCPProtocol":      "tcp4",
+    "TCPPort":          ":8080",
+    "staticDirectory":  "/tmp/testEnvironment/web/",
+    "logFile":          "/tmp/microWeb.log",
+    "logVerbosity":     "verbose"
+  },
+
+  "tls": {
+    "enableTLS": false,
+    "certFile": "",
+    "keyFile":  ""
+  },
+
+  "tune": {
+    "httpReadTimout":       "100ms",
+    "httpResponseTimeout":  "100ms",
+    "cacheTTL":             "60s"
+  },
+
+  "plugin": {
+    "plugins":
+      [
+        {
+          "binding": "/api/",
+          "plugin":"/tmp/testEnvironment/testAPIPlugin/testAPIPlugin.so"
+        }
+      ]
+  }
+}
