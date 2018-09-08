@@ -24,7 +24,7 @@
       [
         {
           "binding": "/api/",
-          "plugin":"/tmp/testEnvironment/testAPIPlugin/testAPIPlugin.so"
+          "plugin":"/tmp/testEnvironment/plugins/testAPIPlugin/testAPIPlugin.so"
         }
       ]
   }

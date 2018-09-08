@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-
-	"github.com/CanadianCommander/MicroWeb/pkg/pluginUtil"
 )
 
 type FOOBAR struct {
@@ -12,11 +10,7 @@ type FOOBAR struct {
 }
 
 func HandleRequest(req *http.Request, res http.ResponseWriter, fileContent *[]byte) bool {
-	foobar := FOOBAR{"FOO-BAR"}
-
-	pluginUtil.ProcessTemplate(fileContent, res, foobar)
-
-	return true
+	return false
 }
 
 func HandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool {

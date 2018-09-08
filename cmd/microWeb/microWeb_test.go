@@ -2,9 +2,14 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
+	"path"
+	"regexp"
 	"testing"
 	"time"
 )
@@ -44,6 +49,9 @@ func buildNStartMicroWeb(srvCtx *context.Context) *exec.Cmd {
 		os.Exit(1)
 	}
 
+	//build plugins
+	buildPlugins("../../testEnvironment/plugins/")
+
 	//copy test file
 	copyTestEnv := exec.Command("cp", "-r", os.Getenv("GOPATH")+"/src/github.com/CanadianCommander/MicroWeb/testEnvironment", "/tmp/")
 	cpyErr := copyTestEnv.Run()
@@ -57,4 +65,75 @@ func buildNStartMicroWeb(srvCtx *context.Context) *exec.Cmd {
 	runServer.Start()
 
 	return runServer
+}
+
+/*
+buildPlugins builds every plugin found in the directory denoted by pluginDir. This is necessary for testing
+because plugins cannot differ in package version from the host application (the web server in this case).
+*/
+func buildPlugins(pluginDir string) {
+	pluginDirList, err := ioutil.ReadDir(pluginDir)
+	if err != nil {
+		fmt.Printf("Could not read plugin dir: %s with error: %s", pluginDir, err.Error())
+		os.Exit(1)
+	}
+
+	for _, file := range pluginDirList {
+		if file.IsDir() {
+			buildPath := path.Join(pluginDir, file.Name())
+			buildCmd := exec.Command("go", "build", "-o", path.Join(buildPath, file.Name()+".so"), "-buildmode=plugin", buildPath)
+			buildError := buildCmd.Run()
+			if buildError != nil {
+				fmt.Printf("failed to build plugin at path %s with error %s", buildPath, buildError.Error())
+				os.Exit(1)
+			}
+		}
+	}
+}
+
+//test getting normal html
+func TestHTTPNormalContent(t *testing.T) {
+	err := doGet("http://localhost:8080/normal.html", 200, func(b []byte) {
+		if matched, _ := regexp.MatchString("<h1> <i> <u> Normal HTML </u> </i> </h1>", string(b)); !matched {
+			fmt.Printf("HTML file did not have expected string. It contained: %s", string(b))
+			t.Fail()
+		}
+	})
+
+	if err != nil {
+		t.Fail()
+	}
+}
+
+//test invoking an api plugin
+func TestAPIPlugin(t *testing.T) {
+	err := doGet("http://localhost:8080/api/", 200, func(b []byte) {
+		if matched, _ := regexp.MatchString("HELLO FROM AN API FUNCTION!", string(b)); !matched {
+			fmt.Printf("API response did not contain the expected string, it contained: %s", string(b))
+			t.Fail()
+		}
+	})
+
+	if err != nil {
+		t.Fail()
+	}
+}
+
+func doGet(url string, validStatus int, validationFunc func([]byte)) error {
+	var client = http.Client{}
+
+	response, err := client.Get(url)
+	if err != nil {
+		fmt.Printf("Could send GET request with error: %s\n", err.Error())
+		return errors.New("could not send GET request")
+	}
+
+	if response.StatusCode != validStatus {
+		fmt.Printf("Wrong HTTP status on api request http://localhost:8080/api/. expected: %d got: %d\n", validStatus, response.StatusCode)
+		return errors.New("Bad status code")
+	}
+
+	responseBody, _ := ioutil.ReadAll(response.Body)
+	validationFunc(responseBody)
+	return nil
 }
