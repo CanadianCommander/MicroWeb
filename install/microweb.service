@@ -1,0 +1,13 @@
+[Unit]
+Description="MicroWeb web server"
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/microweb -c /etc/microweb/microweb.cfg.json
+WorkingDirectory=/etc/microweb/
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target

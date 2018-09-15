@@ -3,7 +3,7 @@
     "TCPProtocol":      "tcp4",
     "TCPPort":          ":80",
     "staticDirectory":  "./static/",
-    "logFile":          "/etc/microweb/microweb.log",
+    "logFile":          "/var/log/microweb.log",
     "logVerbosity":     "info"
   },
 

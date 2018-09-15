@@ -14,7 +14,6 @@ no database handle for the specified dsn exists.
 func GetDatabaseHandle(dsn string) *sql.DB {
 	db := cache.FetchFromCache(cache.CacheTypeDatabase, dsn)
 	if db == nil {
-		logger.LogError("Could find database denoted by the DSN: %s ", dsn)
 		return nil
 	}
 
