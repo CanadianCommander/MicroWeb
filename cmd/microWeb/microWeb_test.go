@@ -109,7 +109,31 @@ func TestHTTPNormalContent(t *testing.T) {
 func TestAPIPlugin(t *testing.T) {
 	err := doGet("http://localhost:8080/api/", 200, func(b []byte) {
 		if matched, _ := regexp.MatchString("HELLO FROM AN API FUNCTION!", string(b)); !matched {
-			fmt.Printf("API response did not contain the expected string, it contained: %s", string(b))
+			fmt.Printf("API response did not contain the expected string, it contained: %s\n", string(b))
+			t.Fail()
+		}
+	})
+
+	if err != nil {
+		t.Fail()
+	}
+}
+
+func TestDB(t *testing.T) {
+	err := doGet("http://localhost:8080/api/add", 200, func(b []byte) {
+		if matched, _ := regexp.MatchString("ADD", string(b)); !matched {
+			fmt.Printf("API response did not contain the expected string, it contained: %s\n", string(b))
+			t.Fail()
+		}
+	})
+
+	if err != nil {
+		t.Fail()
+	}
+
+	err = doGet("http://localhost:8080/api/get", 200, func(b []byte) {
+		if matched, _ := regexp.MatchString("hello world", string(b)); !matched {
+			fmt.Printf("API response did not contain the expected string, it contained: %s\n", string(b))
 			t.Fail()
 		}
 	})

@@ -67,3 +67,29 @@ func TestCacheManyItems(t *testing.T) {
 		cache.AddToCache(cache.CacheTypeResource, string(rand.Int()), &item)
 	}
 }
+
+func TestCacheRemoveByType(t *testing.T){
+	cache.StartCache()
+
+	for i:=0; i<100;i++ {
+		cache.AddToCache(cache.CacheTypeResource, string(i), 42)
+		cache.AddToCache(cache.CacheTypeDatabase, string(i), 43)
+	}
+
+	allDB := cache.FetchAllOfType(cache.CacheTypeDatabase)
+	for _, dbObj := range allDB {
+		if (dbObj.(int)) != 43 {
+			t.Fail()
+		}
+	}
+
+	cache.FlushCacheByType(cache.CacheTypeResource)
+	for i:=0; i < 100; i++ {
+		if cache.FetchFromCache(cache.CacheTypeResource,  string(i)) != nil {
+			t.Fail()
+		}
+		if cache.FetchFromCache(cache.CacheTypeDatabase, string(i)) == nil {
+			t.Fail()
+		}
+	}
+}

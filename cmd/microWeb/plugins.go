@@ -6,7 +6,6 @@ import (
 	"path"
 	"plugin"
 	"sort"
-	"time"
 
 	"github.com/CanadianCommander/MicroWeb/pkg/cache"
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
@@ -80,7 +79,7 @@ func LoadPlugin(path string) (IPlugin, error) {
 
 	//NOTE, time.Duration(^(uint64(1) << 63)) sets the ttl of plugins to 290 years ... aka never delete
 	//really should be a MAX_DURATION type constant. If it exists I couldn't find it.
-	cache.AddToCacheTTLOverride(cache.CacheTypePlugin, path, time.Duration(^(uint64(1) << 63)), plugin)
+	cache.AddToCacheTTLOverride(cache.CacheTypePlugin, path, cache.MaxTTL, plugin)
 	return plugin, nil
 
 }

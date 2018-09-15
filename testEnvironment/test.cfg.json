@@ -27,5 +27,14 @@
           "plugin":"/tmp/testEnvironment/plugins/testAPIPlugin/testAPIPlugin.so"
         }
       ]
+  },
+
+  "database": {
+    "connections": [
+      {
+        "driver": "sqlite3",
+        "dsn":    "/tmp/test.db"
+      }
+    ]
   }
 }

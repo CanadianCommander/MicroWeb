@@ -15,7 +15,7 @@
 
   "tune": {
     "httpReadTimout":       "100ms",
-    "httpResponseTimeout":  "100ms",
+    "httpResponseTimeout":  "10s",
     "cacheTTL":             "60s"
   },
 
@@ -31,5 +31,14 @@
           "plugin":"resource/plugin2/plugin2.so"
         }
       ]
+  },
+
+  "database": {
+    "connections": [
+      {
+        "driver": "sqlite3",
+        "dsn":    "/tmp/test.db"
+      }
+    ]
   }
 }

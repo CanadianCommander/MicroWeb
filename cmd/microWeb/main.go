@@ -29,8 +29,8 @@ func main() {
 	stopChan := WatchConfigurationFile()
 	defer close(stopChan)
 
-	//TODO cache settings from file
 	cache.StartCache()
+	CreateDatabaseConnections(globalSettings.GetDatabaseConnectionList())
 
 	//create webserver
 	httpServer, err := CreateHTTPServer(globalSettings.GetTCPPort(), globalSettings.GetTCPProtocol(), logger.GetErrorLogger())

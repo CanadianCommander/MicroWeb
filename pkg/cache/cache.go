@@ -6,6 +6,7 @@ call StartCache() to start the cache thread. then use
 package cache
 
 import (
+	"regexp"
 	"sync"
 	"time"
 )
@@ -108,6 +109,18 @@ func FlushCache() {
 }
 
 /*
+FlushCacheByType removes all objects in the cache that have the given type
+*/
+func FlushCacheByType(cacheType string) {
+	msg := cacheChannelMsg{}
+	msg.operation = func() interface{} {
+		flushCacheByType(cacheType)
+		return nil
+	}
+	cacheChannel <- msg
+}
+
+/*
 RemoveFromCache removes the object denoted by cacheType + name from the cache.
 */
 func RemoveFromCache(cacheType string, name string) {
@@ -131,6 +144,28 @@ func FetchFromCache(cacheType string, name string) interface{} {
 	msg.callbackChan = make(chan interface{})
 	cacheChannel <- msg
 	return <-msg.callbackChan
+}
+
+/*
+FetchAllOfType returns every object in the cache of the given type
+*/
+func FetchAllOfType(cacheType string) []interface{} {
+	msg := cacheChannelMsg{}
+	msg.operation = func() interface{} {
+		return getAllOfType(cacheType)
+	}
+	msg.callbackChan = make(chan interface{})
+	cacheChannel <- msg
+
+	objMap := (<-msg.callbackChan).(map[string]interface{})
+	out := make([]interface{}, len(objMap))
+
+	i := 0
+	for _, obj := range objMap {
+		out[i] = obj
+		i++
+	}
+	return out
 }
 
 // ------------------------- back end methods -----------------------------------
@@ -187,6 +222,15 @@ func flushCache() {
 	cacheMap = make(map[string]*cacheObject)
 }
 
+func flushCacheByType(cacheType string) {
+	delMap := getAllOfType(cacheType)
+	if delMap != nil {
+		for key := range delMap {
+			delete(cacheMap, key)
+		}
+	}
+}
+
 func removeFromCache(cacheType string, name string) {
 	delete(cacheMap, cacheType+name)
 }
@@ -198,4 +242,15 @@ func fetchFromCache(cacheType string, name string) interface{} {
 		return obj.object
 	}
 	return nil
+}
+
+func getAllOfType(cacheType string) map[string]interface{} {
+	var out = make(map[string]interface{})
+	for key, obj := range cacheMap {
+		bMatch, _ := regexp.MatchString("^"+cacheType, key)
+		if bMatch {
+			out[key] = obj.object
+		}
+	}
+	return out
 }

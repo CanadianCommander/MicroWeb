@@ -9,13 +9,20 @@ import (
 
 	"github.com/CanadianCommander/MicroWeb/pkg/cache"
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
+	"github.com/CanadianCommander/MicroWeb/pkg/pluginUtil"
 
 	"github.com/fsnotify/fsnotify"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 type pluginBinding struct {
 	Binding string
 	Plugin  string
+}
+
+type databaseConnection struct {
+	Driver,
+	DSN string
 }
 
 // all global configuration settings stored here
@@ -41,6 +48,9 @@ type globalSettingsList struct {
 
 	//plugin
 	plugins []pluginBinding
+
+	//database
+	databaseConnections []databaseConnection
 }
 
 var globalSettings globalSettingsList
@@ -150,8 +160,18 @@ func (g *globalSettingsList) GetPluginList() []pluginBinding {
 	globalSettingsMutex.Lock()
 	defer globalSettingsMutex.Unlock()
 
-	outList := make([]pluginBinding, len(globalSettings.plugins))
-	copy(outList[:], globalSettings.plugins[:])
+	outList := make([]pluginBinding, len(g.plugins))
+	copy(outList[:], g.plugins[:])
+
+	return outList
+}
+
+func (g *globalSettingsList) GetDatabaseConnectionList() []databaseConnection {
+	globalSettingsMutex.Lock()
+	defer globalSettingsMutex.Unlock()
+
+	outList := make([]databaseConnection, len(g.databaseConnections))
+	copy(outList[:], g.databaseConnections[:])
 
 	return outList
 }
@@ -196,6 +216,10 @@ func LoadSettingsFromFile() error {
 		Plugin struct {
 			Plugins []pluginBinding
 		}
+
+		Database struct {
+			Connections []databaseConnection
+		}
 	}
 	cfgFileSettings := Settings{}
 
@@ -234,6 +258,7 @@ func LoadSettingsFromFile() error {
 	globalSettings.httpReadTimeout = cfgFileSettings.Tune.HTTPReadTimout
 	globalSettings.httpResponseTimeout = cfgFileSettings.Tune.HTTPResponseTimeout
 	globalSettings.plugins = cfgFileSettings.Plugin.Plugins
+	globalSettings.databaseConnections = cfgFileSettings.Database.Connections
 	var durationError error
 	globalSettings.cacheTTL, durationError = time.ParseDuration(cfgFileSettings.Tune.CacheTTL)
 	if durationError != nil {
@@ -246,6 +271,18 @@ func LoadSettingsFromFile() error {
 	logger.LogToStdAndFile(logger.VerbosityStringToEnum(globalSettings.logVerbosity), globalSettings.logFilePath)
 	loadSettingsFromFileLogFinalSettings()
 	return nil
+}
+
+/*
+CreateDatabaseConnections creates all the database connections in the databaseConnection list
+and pushes them in to the cache for later use
+*/
+func CreateDatabaseConnections(conList []databaseConnection) {
+	for _, c := range conList {
+		if pluginUtil.GetDatabaseHandle(c.DSN) == nil {
+			pluginUtil.OpenNewDatabaseHandle(c.Driver, c.DSN)
+		}
+	}
 }
 
 func loadSettingsFromFileLogFinalSettings() {
