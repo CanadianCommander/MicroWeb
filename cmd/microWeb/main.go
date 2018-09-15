@@ -6,6 +6,7 @@ import (
 
 	"github.com/CanadianCommander/MicroWeb/pkg/cache"
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
+	"github.com/CanadianCommander/MicroWeb/pkg/pluginUtil"
 )
 
 var debugLogger *log.Logger
@@ -31,6 +32,7 @@ func main() {
 
 	cache.StartCache()
 	CreateDatabaseConnections(globalSettings.GetDatabaseConnectionList())
+	defer pluginUtil.CloseAllDatabaseHandles()
 
 	//create webserver
 	httpServer, err := CreateHTTPServer(globalSettings.GetTCPPort(), globalSettings.GetTCPProtocol(), logger.GetErrorLogger())
