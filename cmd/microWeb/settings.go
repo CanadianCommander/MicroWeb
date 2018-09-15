@@ -12,6 +12,8 @@ import (
 	"github.com/CanadianCommander/MicroWeb/pkg/pluginUtil"
 
 	"github.com/fsnotify/fsnotify"
+	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 )
 
