@@ -42,7 +42,7 @@ the context and call os.Exit() without waiting for the command to complete!
 */
 func buildNStartMicroWeb(srvCtx *context.Context) *exec.Cmd {
 	//build the project
-	buildCmd := exec.Command("go", "build", "-o", "/tmp/microWeb.a", ".")
+	buildCmd := exec.Command("go", "build", "-o", "/tmp/microweb.a", ".")
 	buildErr := buildCmd.Run()
 	if buildErr != nil {
 		fmt.Printf("ERROR: Failed to compile MicroWeb! with error: %s\n", buildErr.Error())
@@ -61,7 +61,7 @@ func buildNStartMicroWeb(srvCtx *context.Context) *exec.Cmd {
 	}
 
 	//run server
-	runServer := exec.CommandContext(*srvCtx, "/tmp/microWeb.a", "-c", "/tmp/testEnvironment/test.cfg.json")
+	runServer := exec.CommandContext(*srvCtx, "/tmp/microweb.a", "-c", "/tmp/testEnvironment/test.cfg.json")
 	runServer.Start()
 
 	return runServer

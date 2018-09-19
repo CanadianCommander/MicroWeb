@@ -9,7 +9,7 @@ else
   mkdir -p /etc/microweb/static
   cp ${INSTALL_DIR}/microweb.cfg.json /etc/microweb/
 
-  go build -o /bin/microweb github.com/CanadianCommander/MicroWeb/cmd/microWeb/
+  go build -o /bin/microweb github.com/CanadianCommander/MicroWeb/cmd/microweb/
 
   cp ${INSTALL_DIR}/microweb.service /lib/systemd/system/
 fi
