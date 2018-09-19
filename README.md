@@ -4,7 +4,15 @@ would build the micro web executable and through go templates and plugins would 
 ## Build
 - Download with `go get github.com/CanadianCommander/MicroWeb`
 - To build run
-`go build github.com/CanadianCommander/MicroWeb/cmd/microWeb` or `go install github.com/CanadianCommander/MicroWeb/cmd/microWeb`
+`go build github.com/CanadianCommander/MicroWeb/cmd/microweb`
 - After the server is built modify `resource/default.cfg.json` as needed.
 - Next build any required go plugins
 - Finally test the server with `./microWeb -c <config file path> -v verbose`
+
+## Install 
+to install microweb on to your system (create configuration files under /etc/microweb and install unit file for systemd) run 
+
+`sudo -E ./install/install.sh` then run the server with `sudo systemctl start microweb`
+
+## Documentation 
+[wiki](https://github.com/CanadianCommander/MicroWeb/wiki)
