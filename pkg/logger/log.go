@@ -142,7 +142,11 @@ LogToFile configures the loggers to output to the given log file. If the file
 exists, output is appended.
 */
 func LogToFile(verbosity int, logFilePath string) {
-	createLoggers(getFileLogWriters(verbosity, logFilePath))
+	fileWriters := getFileLogWriters(verbosity, logFilePath)
+
+	if fileWriters != nil {
+		createLoggers(fileWriters)
+	}
 }
 
 /*
@@ -152,7 +156,11 @@ func LogToStdAndFile(verbosity int, logFilePath string) {
 	stdWriters := getStdLogWriters(verbosity)
 	fileWriters := getFileLogWriters(verbosity, logFilePath)
 
-	createLoggers(getMultiWriter(stdWriters, fileWriters))
+	if fileWriters != nil {
+		createLoggers(getMultiWriter(stdWriters, fileWriters))
+	} else {
+		createLoggers(stdWriters)
+	}
 }
 
 // get stdout io.writers
