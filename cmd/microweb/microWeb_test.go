@@ -103,6 +103,18 @@ func TestHTTPNormalContent(t *testing.T) {
 	if err != nil {
 		t.Fail()
 	}
+
+	//index.html redirect
+	err = doGet("http://localhost:8080/", 200, func(b []byte) {
+		if matched, _ := regexp.MatchString("index.html", string(b)); !matched {
+			fmt.Printf("HTML file did not have expected string. It contained: %s", string(b))
+			t.Fail()
+		}
+	})
+
+	if err != nil {
+		t.Fail()
+	}
 }
 
 //test invoking an api plugin

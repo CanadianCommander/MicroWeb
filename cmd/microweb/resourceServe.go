@@ -120,10 +120,6 @@ URLToFilesystem takes a url and resolves it to a file system path, if possible,
 taking in to account the global setting for static resource path.
 */
 func URLToFilesystem(url string) (string, error) {
-	if strings.Compare(url, "/") == 0 {
-		return "", errors.New("Invalid Path")
-	}
-
 	templatePath := path.Join(globalSettings.GetStaticResourcePath(), url)
 
 	// if some how url contains '..' characters we could accidentally expose the entire filesystem
