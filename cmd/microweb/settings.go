@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/CanadianCommander/MicroWeb/pkg/cache"
@@ -15,6 +16,13 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+)
+
+// GlobalSettings contains MicroWeb global settings
+var GlobalSettings mwSettings
+
+const (
+	reloadFifoFile = "/tmp/microweb.fifo"
 )
 
 type pluginBinding struct {
@@ -29,7 +37,7 @@ type databaseConnection struct {
 
 // all global configuration settings stored here
 // access only through getters
-type globalSettingsList struct {
+type mwSettings struct {
 	//general
 	tcpProtocol        string
 	tcpPort            string
@@ -37,6 +45,7 @@ type globalSettingsList struct {
 	staticResourcePath string
 	logFilePath        string
 	logVerbosity       string
+	autoReloadSettings bool
 
 	//TLS
 	tlsEnabled bool
@@ -53,140 +62,148 @@ type globalSettingsList struct {
 
 	//database
 	databaseConnections []databaseConnection
-}
 
-var globalSettings globalSettingsList
-var globalSettingsMutex = sync.Mutex{}
+	//meta
+	mutex sync.Mutex
+}
 
 //global settings getters --------------------------
 //GetTCPProtocol returns the current TCP protocol setting
-func (g *globalSettingsList) GetTCPProtocol() string {
-	globalSettingsMutex.Lock()
-	defer globalSettingsMutex.Unlock()
+func (settings *mwSettings) GetTCPProtocol() string {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
 
-	return globalSettings.tcpProtocol
+	return settings.tcpProtocol
 }
 
 //GetTCPPort returns the current TCP port setting
-func (g *globalSettingsList) GetTCPPort() string {
-	globalSettingsMutex.Lock()
-	defer globalSettingsMutex.Unlock()
+func (settings *mwSettings) GetTCPPort() string {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
 
-	return globalSettings.tcpPort
+	return settings.tcpPort
 }
 
 //GetConfigFilePath returns the current configuration file path
-func (g *globalSettingsList) GetConfigFilePath() string {
-	globalSettingsMutex.Lock()
-	defer globalSettingsMutex.Unlock()
+func (settings *mwSettings) GetConfigFilePath() string {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
 
-	return globalSettings.configFilePath
+	return settings.configFilePath
 }
 
 //GetStaticResourcePath returns the current static resource path
-func (g *globalSettingsList) GetStaticResourcePath() string {
-	globalSettingsMutex.Lock()
-	defer globalSettingsMutex.Unlock()
+func (settings *mwSettings) GetStaticResourcePath() string {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
 
-	return globalSettings.staticResourcePath
+	return settings.staticResourcePath
 }
 
 //GetLogFilePath returns the current log file path
-func (g *globalSettingsList) GetLogFilePath() string {
-	globalSettingsMutex.Lock()
-	defer globalSettingsMutex.Unlock()
+func (settings *mwSettings) GetLogFilePath() string {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
 
-	return globalSettings.logFilePath
+	return settings.logFilePath
 }
 
 //GetLogVerbosityLevel returns the current logging verbosity level
-func (g *globalSettingsList) GetLogVerbosityLevel() string {
-	globalSettingsMutex.Lock()
-	defer globalSettingsMutex.Unlock()
+func (settings *mwSettings) GetLogVerbosityLevel() string {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
 
-	return globalSettings.logVerbosity
+	return settings.logVerbosity
+}
+
+//IsAutoReloadSettings returns true if auto reload settings is set in configuration
+func (settings *mwSettings) IsAutoReloadSettings() bool {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
+
+	return settings.autoReloadSettings
 }
 
 //IsTLSEnabled returns true if TLS is enabled
-func (g *globalSettingsList) IsTLSEnabled() bool {
-	globalSettingsMutex.Lock()
-	defer globalSettingsMutex.Unlock()
+func (settings *mwSettings) IsTLSEnabled() bool {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
 
-	return globalSettings.tlsEnabled
+	return settings.tlsEnabled
 }
 
 //GetCertFile returns the file system path to the TLS certificate file
-func (g *globalSettingsList) GetCertFile() string {
-	globalSettingsMutex.Lock()
-	defer globalSettingsMutex.Unlock()
+func (settings *mwSettings) GetCertFile() string {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
 
-	return globalSettings.certFile
+	return settings.certFile
 }
 
 //GetKeyFile returns the file system path to the TLS key file
-func (g *globalSettingsList) GetKeyFile() string {
-	globalSettingsMutex.Lock()
-	defer globalSettingsMutex.Unlock()
+func (settings *mwSettings) GetKeyFile() string {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
 
-	return globalSettings.keyFile
+	return settings.keyFile
 }
 
 //GetHTTPResponseTimeout returns the current http response timeout setting as a string.
 //use time.ParseDuration() to decode
-func (g *globalSettingsList) GetHTTPResponseTimeout() string {
-	globalSettingsMutex.Lock()
-	defer globalSettingsMutex.Unlock()
+func (settings *mwSettings) GetHTTPResponseTimeout() string {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
 
-	return globalSettings.httpResponseTimeout
+	return settings.httpResponseTimeout
 }
 
 //GetHTTPReadTimeout returns the current http read timeout setting as a string.
 //use time.ParseDuration() to decode
-func (g *globalSettingsList) GetHTTPReadTimeout() string {
-	globalSettingsMutex.Lock()
-	defer globalSettingsMutex.Unlock()
+func (settings *mwSettings) GetHTTPReadTimeout() string {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
 
-	return globalSettings.httpReadTimeout
+	return settings.httpReadTimeout
 }
 
 //GetCacheTTL returns the current cache TTL setting
-func (g *globalSettingsList) GetCacheTTL() time.Duration {
-	globalSettingsMutex.Lock()
-	defer globalSettingsMutex.Unlock()
+func (settings *mwSettings) GetCacheTTL() time.Duration {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
 
-	return globalSettings.cacheTTL
+	return settings.cacheTTL
 }
 
 //GetPluginList returns a list of current plugin bindings
-func (g *globalSettingsList) GetPluginList() []pluginBinding {
-	globalSettingsMutex.Lock()
-	defer globalSettingsMutex.Unlock()
+func (settings *mwSettings) GetPluginList() []pluginBinding {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
 
-	outList := make([]pluginBinding, len(g.plugins))
-	copy(outList[:], g.plugins[:])
+	outList := make([]pluginBinding, len(settings.plugins))
+	copy(outList[:], settings.plugins[:])
 
 	return outList
 }
 
-func (g *globalSettingsList) GetDatabaseConnectionList() []databaseConnection {
-	globalSettingsMutex.Lock()
-	defer globalSettingsMutex.Unlock()
+func (settings *mwSettings) GetDatabaseConnectionList() []databaseConnection {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
 
-	outList := make([]databaseConnection, len(g.databaseConnections))
-	copy(outList[:], g.databaseConnections[:])
+	outList := make([]databaseConnection, len(settings.databaseConnections))
+	copy(outList[:], settings.databaseConnections[:])
 
 	return outList
 }
 
 /*
 LoadSettingsFromFile loads configuration settings from a json setting file. The path to said file
-is pulled from globalSettings.configFilePath (set through cli arguments)
+is pulled from this.configFilePath (set through cli arguments)
 */
-func LoadSettingsFromFile() error {
-	globalSettingsMutex.Lock()
-	defer globalSettingsMutex.Unlock()
+func (settings *mwSettings) LoadSettingsFromFile() error {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
 
-	cfgFile, cfgErr := os.Open(globalSettings.configFilePath)
+	cfgFile, cfgErr := os.Open(GlobalSettings.configFilePath)
 	if cfgErr != nil {
 		logger.LogError("Could not open configuration file! with error: %s", cfgErr.Error())
 		return cfgErr
@@ -201,6 +218,7 @@ func LoadSettingsFromFile() error {
 			StaticDirectory,
 			LogFile,
 			LogVerbosity string
+			AutoReloadSettings bool
 		}
 
 		TLS struct {
@@ -233,45 +251,46 @@ func LoadSettingsFromFile() error {
 	}
 
 	//apply settings if not overridden by cli args
-	if globalSettings.tcpProtocol == "" {
-		globalSettings.tcpProtocol = cfgFileSettings.General.TCPProtocol
+	if settings.tcpProtocol == "" {
+		settings.tcpProtocol = cfgFileSettings.General.TCPProtocol
 	}
-	if globalSettings.tcpPort == "" {
-		globalSettings.tcpPort = cfgFileSettings.General.TCPPort
+	if settings.tcpPort == "" {
+		settings.tcpPort = cfgFileSettings.General.TCPPort
 	}
-	if globalSettings.staticResourcePath == "" {
-		globalSettings.staticResourcePath = cfgFileSettings.General.StaticDirectory
+	if settings.staticResourcePath == "" {
+		settings.staticResourcePath = cfgFileSettings.General.StaticDirectory
 	}
-	if globalSettings.logFilePath == "" {
-		globalSettings.logFilePath = cfgFileSettings.General.LogFile
+	if settings.logFilePath == "" {
+		settings.logFilePath = cfgFileSettings.General.LogFile
 	}
-	if globalSettings.logVerbosity == "" {
-		globalSettings.logVerbosity = cfgFileSettings.General.LogVerbosity
+	if settings.logVerbosity == "" {
+		settings.logVerbosity = cfgFileSettings.General.LogVerbosity
 	}
-	if globalSettings.certFile == "" {
-		globalSettings.certFile = cfgFileSettings.TLS.CertFile
+	if settings.certFile == "" {
+		settings.certFile = cfgFileSettings.TLS.CertFile
 	}
-	if globalSettings.keyFile == "" {
-		globalSettings.keyFile = cfgFileSettings.TLS.KeyFile
+	if settings.keyFile == "" {
+		settings.keyFile = cfgFileSettings.TLS.KeyFile
 	}
 
 	//set non overridable settings
-	globalSettings.tlsEnabled = cfgFileSettings.TLS.EnableTLS
-	globalSettings.httpReadTimeout = cfgFileSettings.Tune.HTTPReadTimout
-	globalSettings.httpResponseTimeout = cfgFileSettings.Tune.HTTPResponseTimeout
-	globalSettings.plugins = cfgFileSettings.Plugin.Plugins
-	globalSettings.databaseConnections = cfgFileSettings.Database.Connections
+	settings.tlsEnabled = cfgFileSettings.TLS.EnableTLS
+	settings.httpReadTimeout = cfgFileSettings.Tune.HTTPReadTimout
+	settings.httpResponseTimeout = cfgFileSettings.Tune.HTTPResponseTimeout
+	settings.plugins = cfgFileSettings.Plugin.Plugins
+	settings.databaseConnections = cfgFileSettings.Database.Connections
+	settings.autoReloadSettings = cfgFileSettings.General.AutoReloadSettings
 	var durationError error
-	globalSettings.cacheTTL, durationError = time.ParseDuration(cfgFileSettings.Tune.CacheTTL)
+	settings.cacheTTL, durationError = time.ParseDuration(cfgFileSettings.Tune.CacheTTL)
 	if durationError != nil {
 		logger.LogWarning("Could not parse cache TTL setting of [%s] defaulting to 60 seconds", cfgFileSettings.Tune.CacheTTL)
-		globalSettings.cacheTTL = 60 * time.Second
+		settings.cacheTTL = 60 * time.Second
 	}
 
-	updatePkgSettings()
+	updatePkgSettings(settings)
 
-	logger.LogToStdAndFile(logger.VerbosityStringToEnum(globalSettings.logVerbosity), globalSettings.logFilePath)
-	loadSettingsFromFileLogFinalSettings()
+	logger.LogToStdAndFile(logger.VerbosityStringToEnum(settings.logVerbosity), settings.logFilePath)
+	loadSettingsFromFileLogFinalSettings(settings)
 	return nil
 }
 
@@ -287,41 +306,84 @@ func CreateDatabaseConnections(conList []databaseConnection) {
 	}
 }
 
-func loadSettingsFromFileLogFinalSettings() {
+func loadSettingsFromFileLogFinalSettings(settings *mwSettings) {
 	logger.LogVerbose("=== NEW SETTINGS ===")
 	logger.LogVerbose("GENERAL:")
-	logger.LogVerbose("\tSETTING: TCP Protocol: %s", globalSettings.tcpProtocol)
-	logger.LogVerbose("\tSETTING: TCP Port: %s", globalSettings.tcpPort)
-	logger.LogVerbose("\tSETTING: Static asset directory: %s", globalSettings.staticResourcePath)
-	logger.LogVerbose("\tSETTING: Log file: %s", globalSettings.logFilePath)
-	logger.LogVerbose("\tSETTING: Verbosity: %s", globalSettings.logVerbosity)
+	logger.LogVerbose("\tSETTING: TCP Protocol: %s", settings.tcpProtocol)
+	logger.LogVerbose("\tSETTING: TCP Port: %s", settings.tcpPort)
+	logger.LogVerbose("\tSETTING: Static asset directory: %s", settings.staticResourcePath)
+	logger.LogVerbose("\tSETTING: Log file: %s", settings.logFilePath)
+	logger.LogVerbose("\tSETTING: Verbosity: %s", settings.logVerbosity)
+	logger.LogVerbose("\tSETTING: auto reload: %t", settings.autoReloadSettings)
 
 	logger.LogVerbose("TLS:")
-	logger.LogVerbose("\tSETTING: TLS Enabled: %t", globalSettings.tlsEnabled)
-	logger.LogVerbose("\tSETTING: TLS Cert file: %s", globalSettings.certFile)
-	logger.LogVerbose("\tSETTING: TLS Key  file: %s", globalSettings.keyFile)
+	logger.LogVerbose("\tSETTING: TLS Enabled: %t", settings.tlsEnabled)
+	logger.LogVerbose("\tSETTING: TLS Cert file: %s", settings.certFile)
+	logger.LogVerbose("\tSETTING: TLS Key  file: %s", settings.keyFile)
 
 	logger.LogVerbose("TUNE:")
-	logger.LogVerbose("\tSETTING: read timeout: %s", globalSettings.httpReadTimeout)
-	logger.LogVerbose("\tSETTING: response timeout: %s", globalSettings.httpResponseTimeout)
-	logger.LogVerbose("\tSETTING: cache ttl: %d Seconds", globalSettings.cacheTTL/time.Second)
+	logger.LogVerbose("\tSETTING: read timeout: %s", settings.httpReadTimeout)
+	logger.LogVerbose("\tSETTING: response timeout: %s", settings.httpResponseTimeout)
+	logger.LogVerbose("\tSETTING: cache ttl: %d Seconds", settings.cacheTTL/time.Second)
 
 	logger.LogVerbose("PLUGIN:")
-	for _, binding := range globalSettings.plugins {
+	for _, binding := range settings.plugins {
 		logger.LogVerbose("\tSETTING: plugin: %s bound to: %s", binding.Plugin, binding.Binding)
 	}
 }
 
 //update external package settings
-func updatePkgSettings() {
-	cache.UpdateCacheTTL(globalSettings.cacheTTL)
+func updatePkgSettings(settings *mwSettings) {
+	cache.UpdateCacheTTL(settings.cacheTTL)
+}
+
+/*
+WaitForReaload waits for the reload command on the configured fifo file. most often this would be invoked with "systemctl reload microweb"
+return: a channel close this channel to stop waiting for reload
+*/
+func (settings *mwSettings) WaitForReaload() chan bool {
+	closeChan := make(chan bool)
+
+	go func() {
+		if syscall.Access(reloadFifoFile, syscall.F_OK) != nil {
+			syscall.Mkfifo(reloadFifoFile, 0666) // the number of the beast
+		}
+		reloadFifo, err := os.OpenFile(reloadFifoFile, os.O_RDWR, os.ModeNamedPipe)
+		if err != nil {
+			logger.LogError("Could not open reload fifo! with error %s", err.Error())
+			return
+		}
+
+		checkInterval := time.NewTicker(1 * time.Second)
+
+		logger.LogVerbose("Waiting for reload message on fifo /tmp/microweb.fifo")
+		for {
+			select {
+			case <-checkInterval.C:
+				msg, err := ReadFileLine(reloadFifo)
+				if err != nil {
+					logger.LogError("Error reading reload fifo: %s", err.Error())
+					continue
+				}
+				if string(msg) == "reload" {
+					settings.LoadSettingsFromFile()
+				}
+			case _, isOpen := <-closeChan:
+				if !isOpen {
+					return
+				}
+			}
+		}
+	}()
+
+	return closeChan
 }
 
 /*
 WatchConfigurationFile starts watching the configuration file for changes. if it does change, realod the settings.
 returns a done channel, close this channel to stop watching the configuration file
 */
-func WatchConfigurationFile() chan bool {
+func (settings *mwSettings) WatchConfigurationFile() chan bool {
 	doneChan := make(chan bool)
 	fileWatcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -333,11 +395,11 @@ func WatchConfigurationFile() chan bool {
 		for {
 			select {
 			case event := <-fileWatcher.Events:
-				if path.Base(event.Name) == path.Base(globalSettings.GetConfigFilePath()) &&
+				if path.Base(event.Name) == path.Base(settings.GetConfigFilePath()) &&
 					event.Op&(fsnotify.Write|fsnotify.Create) > 0 {
 					//some times text editors use a swap file. Instead of writing to the config file they delete it and
 					//create a new config file with the contents of there swap file
-					LoadSettingsFromFile()
+					settings.LoadSettingsFromFile()
 				}
 			case err := <-fileWatcher.Errors:
 				logger.LogError("Got error while watching configuration file: ", err.Error())
@@ -350,8 +412,8 @@ func WatchConfigurationFile() chan bool {
 		}
 	}()
 
-	logger.LogVerbose("Watching configuration file @ %s for changes", globalSettings.GetConfigFilePath())
-	fileWatcher.Add(path.Dir(globalSettings.GetConfigFilePath()))
+	logger.LogVerbose("Watching configuration file @ %s for changes", settings.GetConfigFilePath())
+	fileWatcher.Add(path.Dir(settings.GetConfigFilePath()))
 
 	return doneChan
 }

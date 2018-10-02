@@ -4,7 +4,8 @@
     "TCPPort":          ":80",
     "staticDirectory":  "./static/",
     "logFile":          "/etc/microweb/microweb.log",
-    "logVerbosity":     "info"
+    "logVerbosity":     "info",
+    "autoReloadSettings": false 
   },
 
   "tls": {

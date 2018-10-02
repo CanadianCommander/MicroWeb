@@ -120,11 +120,11 @@ URLToFilesystem takes a url and resolves it to a file system path, if possible,
 taking in to account the global setting for static resource path.
 */
 func URLToFilesystem(url string) (string, error) {
-	templatePath := path.Join(globalSettings.GetStaticResourcePath(), url)
+	templatePath := path.Join(GlobalSettings.GetStaticResourcePath(), url)
 
 	// if some how url contains '..' characters we could accidentally expose the entire filesystem
 	// make sure we are still within the static resource path
-	if !strings.Contains(templatePath, path.Clean(globalSettings.GetStaticResourcePath())) {
+	if !strings.Contains(templatePath, path.Clean(GlobalSettings.GetStaticResourcePath())) {
 		logger.LogWarning("Suspicius URL activity. URL resolved to: %s", templatePath)
 		return "", errors.New("URL invalid")
 	}

@@ -134,18 +134,18 @@ the match produced by the /index/ binding, while for all othere querys, ex fsPat
 the frist binding will be used.
 */
 func GetPluginByResourcePath(fsPath string) (string, error) {
-	pluginList := make([]pluginBinding, len(globalSettings.GetPluginList()))
-	copy(pluginList[:], globalSettings.GetPluginList()[:])
+	pluginList := make([]pluginBinding, len(GlobalSettings.GetPluginList()))
+	copy(pluginList[:], GlobalSettings.GetPluginList()[:])
 
 	lessFunction := func(i, j int) bool {
-		iDist := StringMatchLength(path.Join(globalSettings.GetStaticResourcePath(), pluginList[i].Binding), fsPath)
-		jDist := StringMatchLength(path.Join(globalSettings.GetStaticResourcePath(), pluginList[j].Binding), fsPath)
+		iDist := StringMatchLength(path.Join(GlobalSettings.GetStaticResourcePath(), pluginList[i].Binding), fsPath)
+		jDist := StringMatchLength(path.Join(GlobalSettings.GetStaticResourcePath(), pluginList[j].Binding), fsPath)
 		return iDist > jDist
 	}
 	sort.Slice(pluginList[:], lessFunction)
 
 	for _, plugin := range pluginList {
-		if StringMatchLength(path.Join(globalSettings.GetStaticResourcePath(), plugin.Binding), fsPath) == len(path.Join(globalSettings.GetStaticResourcePath(), plugin.Binding)) {
+		if StringMatchLength(path.Join(GlobalSettings.GetStaticResourcePath(), plugin.Binding), fsPath) == len(path.Join(GlobalSettings.GetStaticResourcePath(), plugin.Binding)) {
 			return plugin.Plugin, nil
 		}
 	}

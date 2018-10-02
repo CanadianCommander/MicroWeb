@@ -4,7 +4,8 @@
     "TCPPort":          ":8080",
     "staticDirectory":  "/tmp/testEnvironment/web/",
     "logFile":          "/tmp/microWeb.log",
-    "logVerbosity":     "verbose"
+    "logVerbosity":     "verbose",
+    "autoReloadSettings": false
   },
 
   "tls": {

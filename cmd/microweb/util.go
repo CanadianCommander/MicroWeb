@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"math"
+	"os"
 )
 
 /*
@@ -16,4 +18,13 @@ func StringMatchLength(s1, s2 string) int {
 	}
 
 	return i
+}
+
+/*
+ReadFileLine reads one line from the given file and returns it, not including the "\n" character
+*/
+func ReadFileLine(file *os.File) (string, error) {
+	lineBuffer := bufio.NewReader(file)
+	lineB, _, err := (lineBuffer.ReadLine())
+	return string(lineB), err
 }

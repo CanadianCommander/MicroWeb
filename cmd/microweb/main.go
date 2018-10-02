@@ -24,18 +24,22 @@ func main() {
 	}
 
 	//load settings from cfg file
-	if LoadSettingsFromFile() != nil {
+	if GlobalSettings.LoadSettingsFromFile() != nil {
 		logger.LogWarning("Could not load settings from configuration file")
 	}
-	stopChan := WatchConfigurationFile()
-	defer close(stopChan)
+	if GlobalSettings.IsAutoReloadSettings() {
+		stopChanAutoLoad := GlobalSettings.WatchConfigurationFile()
+		defer close(stopChanAutoLoad)
+	}
+	stopChanReload := GlobalSettings.WaitForReaload()
+	defer close(stopChanReload)
 
 	cache.StartCache()
-	CreateDatabaseConnections(globalSettings.GetDatabaseConnectionList())
+	CreateDatabaseConnections(GlobalSettings.GetDatabaseConnectionList())
 	defer pluginUtil.CloseAllDatabaseHandles()
 
 	//create webserver
-	httpServer, err := CreateHTTPServer(globalSettings.GetTCPPort(), globalSettings.GetTCPProtocol(), logger.GetErrorLogger())
+	httpServer, err := CreateHTTPServer(GlobalSettings.GetTCPPort(), GlobalSettings.GetTCPProtocol(), logger.GetErrorLogger())
 	if err != nil {
 		logger.LogError("Failed to start webserver")
 	} else {

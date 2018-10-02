@@ -70,10 +70,10 @@ func ShouldAbort(args map[string]interface{}) bool {
 SetCliGlobalSettings sets global settings based on passed cli args
 */
 func SetCliGlobalSettings(args map[string]interface{}) {
-	globalSettings.configFilePath = *args["c"].(*string)
-	globalSettings.staticResourcePath = *args["s"].(*string)
-	globalSettings.logFilePath = *args["l"].(*string)
-	globalSettings.logVerbosity = *args["v"].(*string)
-	globalSettings.certFile = *args["sc"].(*string)
-	globalSettings.keyFile = *args["sk"].(*string)
+	GlobalSettings.configFilePath = *args["c"].(*string)
+	GlobalSettings.staticResourcePath = *args["s"].(*string)
+	GlobalSettings.logFilePath = *args["l"].(*string)
+	GlobalSettings.logVerbosity = *args["v"].(*string)
+	GlobalSettings.certFile = *args["sc"].(*string)
+	GlobalSettings.keyFile = *args["sk"].(*string)
 }
