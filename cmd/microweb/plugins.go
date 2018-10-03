@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"mime"
 	"net/http"
 	"path"
 	"plugin"
@@ -16,7 +17,7 @@ IPlugin a generic plugin interface that all plugins must implement (some functio
 */
 type IPlugin interface {
 	//called to handle normal resource requests
-	HandleRequest(req *http.Request, res http.ResponseWriter, fileContent *[]byte) bool
+	HandleRequest(req *http.Request, res http.ResponseWriter, fsName string) bool
 
 	//called to handle virtual resource requests (a request the does not target a physical file on the server)
 	HandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool
@@ -26,15 +27,15 @@ type IPlugin interface {
 BasicPlugin a basic implementation of the IPlugin interface.
 */
 type BasicPlugin struct {
-	HandleRequestFunc        func(req *http.Request, res http.ResponseWriter, fileContent *[]byte) bool
+	HandleRequestFunc        func(req *http.Request, res http.ResponseWriter, fsName string) bool
 	HandleVirtualRequestFunc func(req *http.Request, res http.ResponseWriter) bool
 }
 
 /*
 HandleRequest passes through the function call to a function pointer loaded from the plugins symbol table
 */
-func (tp *BasicPlugin) HandleRequest(req *http.Request, res http.ResponseWriter, fileContent *[]byte) bool {
-	return tp.HandleRequestFunc(req, res, fileContent)
+func (tp *BasicPlugin) HandleRequest(req *http.Request, res http.ResponseWriter, fsName string) bool {
+	return tp.HandleRequestFunc(req, res, fsName)
 }
 
 /*
@@ -46,6 +47,20 @@ func (tp *BasicPlugin) HandleVirtualRequest(req *http.Request, res http.Response
 
 func defaultHandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool {
 	res.WriteHeader(404)
+	return false
+}
+
+func defaultHandleRequest(req *http.Request, res http.ResponseWriter, fsName string) bool {
+	//just serve the file up as is.
+	buff := ReadFileToBuff(fsName)
+	if buff != nil {
+		mimeType := mime.TypeByExtension(path.Ext(fsName))
+		res.Header().Add("Content-Type", mimeType)
+		res.Write((*buff)[:])
+		return true
+	}
+
+	res.WriteHeader(500)
 	return false
 }
 
@@ -100,8 +115,8 @@ func constructPlugin(plugin *plugin.Plugin) IPlugin {
 
 	handleReqFunc, err := plugin.Lookup("HandleRequest")
 	if err != nil {
-		logger.LogError("Plugin does not export required function 'func HandleRequest(req *http.Request, res http.ResponseWriter, fileContent *[]byte) bool'")
-		return nil
+		logger.LogInfo("Plugin does not export Optional function 'func HandleRequest(req *http.Request, res http.ResponseWriter, fsName string) bool'")
+		handleReqFunc = defaultHandleRequest
 	}
 	handleVirtualReqFunc, err := plugin.Lookup("HandleVirtualRequest")
 	if err != nil {
@@ -110,7 +125,7 @@ func constructPlugin(plugin *plugin.Plugin) IPlugin {
 	}
 
 	var bErr bool
-	NewPlugin.HandleRequestFunc, bErr = handleReqFunc.(func(req *http.Request, res http.ResponseWriter, fileContent *[]byte) bool)
+	NewPlugin.HandleRequestFunc, bErr = handleReqFunc.(func(req *http.Request, res http.ResponseWriter, fsName string) bool)
 	if !bErr {
 		logger.LogError("Plugin HandleRequest(...) function does not match IPlugin interface")
 	}

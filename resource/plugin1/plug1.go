@@ -1,9 +1,9 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"net/http"
-	"database/sql"
 
 	"github.com/CanadianCommander/MicroWeb/pkg/pluginUtil"
 	_ "github.com/mattn/go-sqlite3"
@@ -13,10 +13,10 @@ type FOOBAR struct {
 	Msg string
 }
 
-func HandleRequest(req *http.Request, res http.ResponseWriter, fileContent *[]byte) bool {
+func HandleRequest(req *http.Request, res http.ResponseWriter, fsName string) bool {
 	foobar := FOOBAR{"FOO-BAR"}
 
-	pluginUtil.ProcessTemplate(fileContent, res, foobar)
+	pluginUtil.ProcessTemplate(pluginUtil.ReadFileToBuff(fsName), res, foobar)
 
 	return true
 }

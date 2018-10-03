@@ -11,7 +11,7 @@ type FOOBAR struct {
 	Msg string
 }
 
-func HandleRequest(req *http.Request, res http.ResponseWriter, fileContent *[]byte) bool {
+func HandleRequest(req *http.Request, res http.ResponseWriter, fsName string) bool {
 	return false
 }
 

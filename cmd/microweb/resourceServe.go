@@ -67,14 +67,7 @@ func handleRequest(res http.ResponseWriter, req *http.Request) bool {
 			return plugin.HandleVirtualRequest(req, res)
 		}
 
-		// real file path
-		buff := ReadFileToBuff(fsPath)
-		if buff == nil {
-			res.WriteHeader(500)
-			return false
-		}
-
-		return plugin.HandleRequest(req, res, buff)
+		return plugin.HandleRequest(req, res, fsPath)
 	}
 
 	return true
