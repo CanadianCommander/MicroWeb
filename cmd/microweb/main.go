@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"syscall"
 
 	"github.com/CanadianCommander/MicroWeb/pkg/cache"
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
@@ -12,6 +13,9 @@ import (
 var debugLogger *log.Logger
 
 func main() {
+	//disable umask
+	syscall.Umask(0000)
+
 	//build loggers
 	logger.LogToStd(logger.VDebug)
 
