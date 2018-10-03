@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"mime"
 	"net/http"
 	"os"
 	"path"
@@ -44,6 +45,8 @@ func handleRequest(res http.ResponseWriter, req *http.Request) bool {
 		//read and serve file
 		buff := ReadFileToBuff(fsPath)
 		if buff != nil {
+			mimeType := mime.TypeByExtension(path.Ext(fsPath))
+			res.Header().Add("Content-Type", mimeType)
 			res.Write((*buff)[:])
 		} else {
 			res.WriteHeader(500)
