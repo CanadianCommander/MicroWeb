@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
+	mwsettings "github.com/CanadianCommander/MicroWeb/pkg/mwSettings"
 )
 
 // HTTPServer contains an, http server + tcp connection all wrapped up in to one struct
@@ -19,9 +20,9 @@ type HTTPServer struct {
 ServeHTTP start the http server. BLOCKS until server exits
 */
 func (svr *HTTPServer) ServeHTTP() {
-	if GlobalSettings.IsTLSEnabled() {
+	if mwsettings.GlobalSettings.IsTLSEnabled() {
 		logger.LogInfo("Serving HTTPS on: %s", svr.tcpListener.Addr().String())
-		svr.server.ServeTLS(svr.tcpListener, GlobalSettings.GetCertFile(), GlobalSettings.GetKeyFile())
+		svr.server.ServeTLS(svr.tcpListener, mwsettings.GlobalSettings.GetCertFile(), mwsettings.GlobalSettings.GetKeyFile())
 	} else {
 		logger.LogInfo("Serving HTTP on: %s", svr.tcpListener.Addr().String())
 		svr.server.Serve(svr.tcpListener)
@@ -37,17 +38,17 @@ func CreateHTTPServer(port string, proto string, errLogger *log.Logger) (*HTTPSe
 	srvMux := http.NewServeMux()
 	srvMux.HandleFunc("/", HandleRequest)
 
-	readTimout, rtErr := time.ParseDuration(GlobalSettings.GetHTTPReadTimeout())
+	readTimout, rtErr := time.ParseDuration(mwsettings.GlobalSettings.GetHTTPReadTimeout())
 	if rtErr != nil {
 		logger.LogError("Could not parse read timeout: %s. defaulting to 1 second",
-			GlobalSettings.GetHTTPReadTimeout())
+			mwsettings.GlobalSettings.GetHTTPReadTimeout())
 		readTimout, _ = time.ParseDuration("1s")
 	}
 
-	writeTimout, wtErr := time.ParseDuration(GlobalSettings.GetHTTPResponseTimeout())
+	writeTimout, wtErr := time.ParseDuration(mwsettings.GlobalSettings.GetHTTPResponseTimeout())
 	if wtErr != nil {
 		logger.LogError("Could not parse response timeout: %s. defaulting to 1 second",
-			GlobalSettings.GetHTTPResponseTimeout())
+			mwsettings.GlobalSettings.GetHTTPResponseTimeout())
 		writeTimout, _ = time.ParseDuration("1s")
 	}
 

@@ -1,4 +1,4 @@
-package main
+package mwsettings
 
 import (
 	"encoding/json"
@@ -13,8 +13,11 @@ import (
 	"github.com/CanadianCommander/MicroWeb/pkg/pluginUtil"
 
 	"github.com/fsnotify/fsnotify"
+	//load mysql driver
 	_ "github.com/go-sql-driver/mysql"
+	//load Postgres driver
 	_ "github.com/lib/pq"
+	//load sqlite driver
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -67,7 +70,7 @@ type mwSettings struct {
 	mutex sync.Mutex
 }
 
-//global settings getters --------------------------
+// mwSettings getters --------------------------
 //GetTCPProtocol returns the current TCP protocol setting
 func (settings *mwSettings) GetTCPProtocol() string {
 	settings.mutex.Lock()
@@ -185,6 +188,7 @@ func (settings *mwSettings) GetPluginList() []pluginBinding {
 	return outList
 }
 
+//GetDatabaseConnectionList returns the list of database connections set in the configuration file.
 func (settings *mwSettings) GetDatabaseConnectionList() []databaseConnection {
 	settings.mutex.Lock()
 	defer settings.mutex.Unlock()
@@ -195,15 +199,144 @@ func (settings *mwSettings) GetDatabaseConnectionList() []databaseConnection {
 	return outList
 }
 
+// mwSettings setters --------------------------
+// NOTE: just because you change a setting does not mean it will take effect.
+// for example setting logging levels will not change the "real" logging level unless you reconstruct
+// the loggers. (or you change it before the loggers are constructed for the first time).
+
+//SetTCPProtocol sets TCP protocol. one of "tcp4" or "tcp6".
+func (settings *mwSettings) SetTCPProtocol(proto string) {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
+
+	settings.tcpProtocol = proto
+}
+
+//SetTCPPort sets the tcp port. string like ":<port>" Ex. ":80" for port 80.
+func (settings *mwSettings) SetTCPPort(port string) {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
+
+	settings.tcpPort = port
+}
+
+//SetConfigFilePath sets the configuration file path
+func (settings *mwSettings) SetConfigFilePath(path string) {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
+
+	settings.configFilePath = path
+}
+
+//SetStaticResourcePath sets the static resource path
+func (settings *mwSettings) SetStaticResourcePath(path string) {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
+
+	settings.staticResourcePath = path
+}
+
+//SetLogFilePath sets the log file path
+func (settings *mwSettings) SetLogFilePath(path string) {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
+
+	settings.logFilePath = path
+}
+
+//SetLogVerbosityLevel sets the logging verbosity level. Ex: "verbose"
+func (settings *mwSettings) SetLogVerbosityLevel(level string) {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
+
+	settings.logVerbosity = level
+}
+
+//SetAutoReloadSettings sets auto reload settings policy. if true settings will reload on configuration
+// file change (file will be watched for change)
+func (settings *mwSettings) SetAutoReloadSettings(autoReload bool) {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
+
+	settings.autoReloadSettings = autoReload
+}
+
+//SetTLSEnabled sets if TLS is enabled.
+func (settings *mwSettings) SetTLSEnabled(enable bool) {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
+
+	settings.tlsEnabled = enable
+}
+
+//SetCertFile sets the path to the certificate file to be used in HTTPS / TLS communication
+func (settings *mwSettings) SetCertFile(path string) {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
+
+	settings.certFile = path
+}
+
+//SetKeyFile sets the path to the private key file for TLS / HTTPS communication.
+func (settings *mwSettings) SetKeyFile(path string) {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
+
+	settings.keyFile = path
+}
+
+//SetHTTPResponseTimeout sets the response timeout for HTTP requests using a go-style time string. Ex "1m" == 1 minute
+func (settings *mwSettings) SetHTTPResponseTimeout(timeout string) {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
+
+	settings.httpResponseTimeout = timeout
+}
+
+//SetHTTPReadTimeout sets the HTTP read timeout using a go-style time format. Ex: "1s" == 1 second
+func (settings *mwSettings) SetHTTPReadTimeout(timeout string) {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
+
+	settings.httpReadTimeout = timeout
+}
+
+//SetCacheTTL sets the cache TTL setting. remember this will not change ttl in the cache,
+// this is just the "configuration setting" use cache.UpdateCacheTTL() to actually change it.
+func (settings *mwSettings) SetCacheTTL(ttl time.Duration) {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
+
+	settings.cacheTTL = ttl
+}
+
+//mwSEttings private methods ------------------------------------------------
+
+//setPluginList set the list of plugin bindings.
+func (settings *mwSettings) setPluginList(pList []pluginBinding) {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
+
+	settings.plugins = pList
+}
+
+//setDatabaseConnectionList sets the list of database connections
+func (settings *mwSettings) setDatabaseConnectionList(dList []databaseConnection) {
+	settings.mutex.Lock()
+	defer settings.mutex.Unlock()
+
+	settings.databaseConnections = dList
+}
+
 /*
 LoadSettingsFromFile loads configuration settings from a json setting file. The path to said file
 is pulled from this.configFilePath (set through cli arguments)
 */
 func (settings *mwSettings) LoadSettingsFromFile() error {
-	settings.mutex.Lock()
-	defer settings.mutex.Unlock()
+	//settings.mutex.Lock()
+	//defer settings.mutex.Unlock()
 
-	cfgFile, cfgErr := os.Open(GlobalSettings.configFilePath)
+	cfgFile, cfgErr := os.Open(GlobalSettings.GetConfigFilePath())
 	if cfgErr != nil {
 		logger.LogError("Could not open configuration file! with error: %s", cfgErr.Error())
 		return cfgErr
@@ -251,45 +384,45 @@ func (settings *mwSettings) LoadSettingsFromFile() error {
 	}
 
 	//apply settings if not overridden by cli args
-	if settings.tcpProtocol == "" {
-		settings.tcpProtocol = cfgFileSettings.General.TCPProtocol
+	if settings.GetTCPProtocol() == "" {
+		settings.SetTCPProtocol(cfgFileSettings.General.TCPProtocol)
 	}
-	if settings.tcpPort == "" {
-		settings.tcpPort = cfgFileSettings.General.TCPPort
+	if settings.GetTCPPort() == "" {
+		settings.SetTCPPort(cfgFileSettings.General.TCPPort)
 	}
-	if settings.staticResourcePath == "" {
-		settings.staticResourcePath = cfgFileSettings.General.StaticDirectory
+	if settings.GetStaticResourcePath() == "" {
+		settings.SetStaticResourcePath(cfgFileSettings.General.StaticDirectory)
 	}
-	if settings.logFilePath == "" {
-		settings.logFilePath = cfgFileSettings.General.LogFile
+	if settings.GetLogFilePath() == "" {
+		settings.SetLogFilePath(cfgFileSettings.General.LogFile)
 	}
-	if settings.logVerbosity == "" {
-		settings.logVerbosity = cfgFileSettings.General.LogVerbosity
+	if settings.GetLogVerbosityLevel() == "" {
+		settings.SetLogVerbosityLevel(cfgFileSettings.General.LogVerbosity)
 	}
-	if settings.certFile == "" {
-		settings.certFile = cfgFileSettings.TLS.CertFile
+	if settings.GetCertFile() == "" {
+		settings.SetCertFile(cfgFileSettings.TLS.CertFile)
 	}
-	if settings.keyFile == "" {
-		settings.keyFile = cfgFileSettings.TLS.KeyFile
+	if settings.GetKeyFile() == "" {
+		settings.SetKeyFile(cfgFileSettings.TLS.KeyFile)
 	}
 
 	//set non overridable settings
-	settings.tlsEnabled = cfgFileSettings.TLS.EnableTLS
-	settings.httpReadTimeout = cfgFileSettings.Tune.HTTPReadTimout
-	settings.httpResponseTimeout = cfgFileSettings.Tune.HTTPResponseTimeout
-	settings.plugins = cfgFileSettings.Plugin.Plugins
-	settings.databaseConnections = cfgFileSettings.Database.Connections
-	settings.autoReloadSettings = cfgFileSettings.General.AutoReloadSettings
-	var durationError error
-	settings.cacheTTL, durationError = time.ParseDuration(cfgFileSettings.Tune.CacheTTL)
+	settings.SetAutoReloadSettings(cfgFileSettings.General.AutoReloadSettings)
+	settings.SetTLSEnabled(cfgFileSettings.TLS.EnableTLS)
+	settings.SetHTTPReadTimeout(cfgFileSettings.Tune.HTTPReadTimout)
+	settings.SetHTTPResponseTimeout(cfgFileSettings.Tune.HTTPResponseTimeout)
+	settings.setPluginList(cfgFileSettings.Plugin.Plugins)
+	settings.setDatabaseConnectionList(cfgFileSettings.Database.Connections)
+	cTTL, durationError := time.ParseDuration(cfgFileSettings.Tune.CacheTTL)
 	if durationError != nil {
 		logger.LogWarning("Could not parse cache TTL setting of [%s] defaulting to 60 seconds", cfgFileSettings.Tune.CacheTTL)
 		settings.cacheTTL = 60 * time.Second
 	}
+	settings.SetCacheTTL(cTTL)
 
 	updatePkgSettings(settings)
 
-	logger.LogToStdAndFile(logger.VerbosityStringToEnum(settings.logVerbosity), settings.logFilePath)
+	logger.LogToStdAndFile(logger.VerbosityStringToEnum(settings.GetLogVerbosityLevel()), settings.GetLogFilePath())
 	loadSettingsFromFileLogFinalSettings(settings)
 	return nil
 }
@@ -298,6 +431,7 @@ func (settings *mwSettings) LoadSettingsFromFile() error {
 CreateDatabaseConnections creates all the database connections in the databaseConnection list
 and pushes them in to the cache for later use
 */
+//TODO: move this function!!!!!!!!!!!! database connection creation should be in pluginUtil/db
 func CreateDatabaseConnections(conList []databaseConnection) {
 	for _, c := range conList {
 		if pluginUtil.GetDatabaseHandle(c.DSN) == nil {
@@ -309,32 +443,32 @@ func CreateDatabaseConnections(conList []databaseConnection) {
 func loadSettingsFromFileLogFinalSettings(settings *mwSettings) {
 	logger.LogVerbose("=== NEW SETTINGS ===")
 	logger.LogVerbose("GENERAL:")
-	logger.LogVerbose("\tSETTING: TCP Protocol: %s", settings.tcpProtocol)
-	logger.LogVerbose("\tSETTING: TCP Port: %s", settings.tcpPort)
-	logger.LogVerbose("\tSETTING: Static asset directory: %s", settings.staticResourcePath)
-	logger.LogVerbose("\tSETTING: Log file: %s", settings.logFilePath)
-	logger.LogVerbose("\tSETTING: Verbosity: %s", settings.logVerbosity)
-	logger.LogVerbose("\tSETTING: auto reload: %t", settings.autoReloadSettings)
+	logger.LogVerbose("\tSETTING: TCP Protocol: %s", settings.GetTCPProtocol())
+	logger.LogVerbose("\tSETTING: TCP Port: %s", settings.GetTCPPort())
+	logger.LogVerbose("\tSETTING: Static asset directory: %s", settings.GetStaticResourcePath())
+	logger.LogVerbose("\tSETTING: Log file: %s", settings.GetLogFilePath())
+	logger.LogVerbose("\tSETTING: Verbosity: %s", settings.GetLogVerbosityLevel())
+	logger.LogVerbose("\tSETTING: auto reload: %t", settings.IsAutoReloadSettings())
 
 	logger.LogVerbose("TLS:")
-	logger.LogVerbose("\tSETTING: TLS Enabled: %t", settings.tlsEnabled)
-	logger.LogVerbose("\tSETTING: TLS Cert file: %s", settings.certFile)
-	logger.LogVerbose("\tSETTING: TLS Key  file: %s", settings.keyFile)
+	logger.LogVerbose("\tSETTING: TLS Enabled: %t", settings.IsTLSEnabled())
+	logger.LogVerbose("\tSETTING: TLS Cert file: %s", settings.GetCertFile())
+	logger.LogVerbose("\tSETTING: TLS Key  file: %s", settings.GetKeyFile())
 
 	logger.LogVerbose("TUNE:")
-	logger.LogVerbose("\tSETTING: read timeout: %s", settings.httpReadTimeout)
-	logger.LogVerbose("\tSETTING: response timeout: %s", settings.httpResponseTimeout)
-	logger.LogVerbose("\tSETTING: cache ttl: %d Seconds", settings.cacheTTL/time.Second)
+	logger.LogVerbose("\tSETTING: read timeout: %s", settings.GetHTTPReadTimeout())
+	logger.LogVerbose("\tSETTING: response timeout: %s", settings.GetHTTPResponseTimeout())
+	logger.LogVerbose("\tSETTING: cache ttl: %d Seconds", settings.GetCacheTTL()/time.Second)
 
 	logger.LogVerbose("PLUGIN:")
-	for _, binding := range settings.plugins {
+	for _, binding := range settings.GetPluginList() {
 		logger.LogVerbose("\tSETTING: plugin: %s bound to: %s", binding.Plugin, binding.Binding)
 	}
 }
 
 //update external package settings
 func updatePkgSettings(settings *mwSettings) {
-	cache.UpdateCacheTTL(settings.cacheTTL)
+	cache.UpdateCacheTTL(settings.GetCacheTTL())
 }
 
 /*
@@ -360,7 +494,7 @@ func (settings *mwSettings) WaitForReaload() chan bool {
 		for {
 			select {
 			case <-checkInterval.C:
-				msg, err := ReadFileLine(reloadFifo)
+				msg, err := pluginUtil.ReadFileLine(reloadFifo)
 				if err != nil {
 					logger.LogError("Error reading reload fifo: %s", err.Error())
 					continue

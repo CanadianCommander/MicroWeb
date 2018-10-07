@@ -7,6 +7,7 @@ import (
 
 	"github.com/CanadianCommander/MicroWeb/pkg/cache"
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
+	mwsettings "github.com/CanadianCommander/MicroWeb/pkg/mwSettings"
 	"github.com/CanadianCommander/MicroWeb/pkg/pluginUtil"
 )
 
@@ -28,22 +29,22 @@ func main() {
 	}
 
 	//load settings from cfg file
-	if GlobalSettings.LoadSettingsFromFile() != nil {
+	if mwsettings.GlobalSettings.LoadSettingsFromFile() != nil {
 		logger.LogWarning("Could not load settings from configuration file")
 	}
-	if GlobalSettings.IsAutoReloadSettings() {
-		stopChanAutoLoad := GlobalSettings.WatchConfigurationFile()
+	if mwsettings.GlobalSettings.IsAutoReloadSettings() {
+		stopChanAutoLoad := mwsettings.GlobalSettings.WatchConfigurationFile()
 		defer close(stopChanAutoLoad)
 	}
-	stopChanReload := GlobalSettings.WaitForReaload()
+	stopChanReload := mwsettings.GlobalSettings.WaitForReaload()
 	defer close(stopChanReload)
 
 	cache.StartCache()
-	CreateDatabaseConnections(GlobalSettings.GetDatabaseConnectionList())
+	mwsettings.CreateDatabaseConnections(mwsettings.GlobalSettings.GetDatabaseConnectionList())
 	defer pluginUtil.CloseAllDatabaseHandles()
 
 	//create webserver
-	httpServer, err := CreateHTTPServer(GlobalSettings.GetTCPPort(), GlobalSettings.GetTCPProtocol(), logger.GetErrorLogger())
+	httpServer, err := CreateHTTPServer(mwsettings.GlobalSettings.GetTCPPort(), mwsettings.GlobalSettings.GetTCPProtocol(), logger.GetErrorLogger())
 	if err != nil {
 		logger.LogError("Failed to start webserver")
 	} else {

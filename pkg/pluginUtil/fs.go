@@ -1,6 +1,7 @@
 package pluginUtil
 
 import (
+	"bufio"
 	"html/template"
 	"io"
 	"os"
@@ -48,6 +49,15 @@ func ReadFileToBuff(fsPath string) *[]byte {
 
 	cache.AddToCache(cache.CacheTypeResource, fsPath, (&byteBuffer))
 	return &byteBuffer
+}
+
+/*
+ReadFileLine reads one line from the given file and returns it, not including the "\n" character
+*/
+func ReadFileLine(file *os.File) (string, error) {
+	lineBuffer := bufio.NewReader(file)
+	lineB, _, err := (lineBuffer.ReadLine())
+	return string(lineB), err
 }
 
 /*

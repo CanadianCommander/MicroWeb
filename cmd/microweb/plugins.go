@@ -10,6 +10,7 @@ import (
 
 	"github.com/CanadianCommander/MicroWeb/pkg/cache"
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
+	mwsettings "github.com/CanadianCommander/MicroWeb/pkg/mwSettings"
 )
 
 /*
@@ -149,18 +150,18 @@ the match produced by the /index/ binding, while for all othere querys, ex fsPat
 the frist binding will be used.
 */
 func GetPluginByResourcePath(fsPath string) (string, error) {
-	pluginList := make([]pluginBinding, len(GlobalSettings.GetPluginList()))
-	copy(pluginList[:], GlobalSettings.GetPluginList()[:])
+	pluginList := mwsettings.GlobalSettings.GetPluginList()
 
 	lessFunction := func(i, j int) bool {
-		iDist := StringMatchLength(path.Join(GlobalSettings.GetStaticResourcePath(), pluginList[i].Binding), fsPath)
-		jDist := StringMatchLength(path.Join(GlobalSettings.GetStaticResourcePath(), pluginList[j].Binding), fsPath)
+		iDist := StringMatchLength(path.Join(mwsettings.GlobalSettings.GetStaticResourcePath(), pluginList[i].Binding), fsPath)
+		jDist := StringMatchLength(path.Join(mwsettings.GlobalSettings.GetStaticResourcePath(), pluginList[j].Binding), fsPath)
 		return iDist > jDist
 	}
 	sort.Slice(pluginList[:], lessFunction)
 
 	for _, plugin := range pluginList {
-		if StringMatchLength(path.Join(GlobalSettings.GetStaticResourcePath(), plugin.Binding), fsPath) == len(path.Join(GlobalSettings.GetStaticResourcePath(), plugin.Binding)) {
+		if StringMatchLength(path.Join(mwsettings.GlobalSettings.GetStaticResourcePath(), plugin.Binding), fsPath) ==
+			len(path.Join(mwsettings.GlobalSettings.GetStaticResourcePath(), plugin.Binding)) {
 			return plugin.Plugin, nil
 		}
 	}

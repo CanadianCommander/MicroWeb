@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
+
+	mwsettings "github.com/CanadianCommander/MicroWeb/pkg/mwSettings"
 )
 
 /*
@@ -70,10 +72,10 @@ func ShouldAbort(args map[string]interface{}) bool {
 SetCliGlobalSettings sets global settings based on passed cli args
 */
 func SetCliGlobalSettings(args map[string]interface{}) {
-	GlobalSettings.configFilePath = *args["c"].(*string)
-	GlobalSettings.staticResourcePath = *args["s"].(*string)
-	GlobalSettings.logFilePath = *args["l"].(*string)
-	GlobalSettings.logVerbosity = *args["v"].(*string)
-	GlobalSettings.certFile = *args["sc"].(*string)
-	GlobalSettings.keyFile = *args["sk"].(*string)
+	mwsettings.GlobalSettings.SetConfigFilePath(*args["c"].(*string))
+	mwsettings.GlobalSettings.SetStaticResourcePath(*args["s"].(*string))
+	mwsettings.GlobalSettings.SetLogFilePath(*args["l"].(*string))
+	mwsettings.GlobalSettings.SetLogVerbosityLevel(*args["v"].(*string))
+	mwsettings.GlobalSettings.SetCertFile(*args["sc"].(*string))
+	mwsettings.GlobalSettings.SetKeyFile(*args["sk"].(*string))
 }
