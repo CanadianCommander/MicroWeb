@@ -16,7 +16,7 @@ type FOOBAR struct {
 func HandleRequest(req *http.Request, res http.ResponseWriter, fsName string) bool {
 	foobar := FOOBAR{"FOO-BAR"}
 
-	pluginUtil.ProcessTemplate(pluginUtil.ReadFileToBuff(fsName), res, foobar)
+	pluginUtil.ProcessTemplateHTML(pluginUtil.ReadFileToBuff(fsName), res, foobar)
 
 	return true
 }

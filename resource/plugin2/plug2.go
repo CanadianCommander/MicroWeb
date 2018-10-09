@@ -16,7 +16,7 @@ func (f *FUNCTION) FunctionCall(s string) string {
 func HandleRequest(req *http.Request, res http.ResponseWriter, fsName string) bool {
 	funcStruct := FUNCTION{}
 
-	err := pluginUtil.ProcessTemplate(pluginUtil.ReadFileToBuff(fsName), res, &funcStruct)
+	err := pluginUtil.ProcessTemplateHTML(pluginUtil.ReadFileToBuff(fsName), res, &funcStruct)
 	if err != nil {
 		return false
 	}
