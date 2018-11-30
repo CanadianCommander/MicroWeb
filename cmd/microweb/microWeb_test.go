@@ -165,7 +165,7 @@ func doGet(url string, validStatus int, validationFunc func([]byte)) error {
 	}
 
 	if response.StatusCode != validStatus {
-		fmt.Printf("Wrong HTTP status on api request http://localhost:8080/api/. expected: %d got: %d\n", validStatus, response.StatusCode)
+		fmt.Printf("Wrong HTTP status on request %s expected: %d got: %d\n", url, validStatus, response.StatusCode)
 		return errors.New("Bad status code")
 	}
 

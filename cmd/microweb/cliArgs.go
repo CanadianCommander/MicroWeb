@@ -72,10 +72,10 @@ func ShouldAbort(args map[string]interface{}) bool {
 SetCliGlobalSettings sets global settings based on passed cli args
 */
 func SetCliGlobalSettings(args map[string]interface{}) {
-	mwsettings.GlobalSettings.SetConfigFilePath(*args["c"].(*string))
-	mwsettings.GlobalSettings.SetStaticResourcePath(*args["s"].(*string))
-	mwsettings.GlobalSettings.SetLogFilePath(*args["l"].(*string))
-	mwsettings.GlobalSettings.SetLogVerbosityLevel(*args["v"].(*string))
-	mwsettings.GlobalSettings.SetCertFile(*args["sc"].(*string))
-	mwsettings.GlobalSettings.SetKeyFile(*args["sk"].(*string))
+	mwsettings.AddSetting("configurationFilePath", *args["c"].(*string))
+	mwsettings.AddSetting("general/staticDirectory", *args["s"].(*string))
+	mwsettings.AddSetting("general/logFile", *args["l"].(*string))
+	mwsettings.AddSetting("general/logVerbosity", *args["v"].(*string))
+	mwsettings.AddSetting("tls/certFile", *args["sc"].(*string))
+	mwsettings.AddSetting("tls/keyFile", *args["sk"].(*string))
 }

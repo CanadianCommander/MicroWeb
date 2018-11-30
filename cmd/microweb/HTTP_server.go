@@ -20,9 +20,9 @@ type HTTPServer struct {
 ServeHTTP start the http server. BLOCKS until server exits
 */
 func (svr *HTTPServer) ServeHTTP() {
-	if mwsettings.GlobalSettings.IsTLSEnabled() {
+	if mwsettings.GetSetting("tls/enableTLS").(bool) {
 		logger.LogInfo("Serving HTTPS on: %s", svr.tcpListener.Addr().String())
-		svr.server.ServeTLS(svr.tcpListener, mwsettings.GlobalSettings.GetCertFile(), mwsettings.GlobalSettings.GetKeyFile())
+		svr.server.ServeTLS(svr.tcpListener, mwsettings.GetSetting("tls/certFile").(string), mwsettings.GetSetting("tls/keyFile").(string))
 	} else {
 		logger.LogInfo("Serving HTTP on: %s", svr.tcpListener.Addr().String())
 		svr.server.Serve(svr.tcpListener)
@@ -38,17 +38,17 @@ func CreateHTTPServer(port string, proto string, errLogger *log.Logger) (*HTTPSe
 	srvMux := http.NewServeMux()
 	srvMux.HandleFunc("/", HandleRequest)
 
-	readTimout, rtErr := time.ParseDuration(mwsettings.GlobalSettings.GetHTTPReadTimeout())
+	readTimout, rtErr := time.ParseDuration(mwsettings.GetSetting("tune/httpReadTimeout").(string))
 	if rtErr != nil {
 		logger.LogError("Could not parse read timeout: %s. defaulting to 1 second",
-			mwsettings.GlobalSettings.GetHTTPReadTimeout())
+			mwsettings.GetSetting("tune/httpReadTimeout").(string))
 		readTimout, _ = time.ParseDuration("1s")
 	}
 
-	writeTimout, wtErr := time.ParseDuration(mwsettings.GlobalSettings.GetHTTPResponseTimeout())
+	writeTimout, wtErr := time.ParseDuration(mwsettings.GetSetting("tune/httpResponseTimeout").(string))
 	if wtErr != nil {
 		logger.LogError("Could not parse response timeout: %s. defaulting to 1 second",
-			mwsettings.GlobalSettings.GetHTTPResponseTimeout())
+			mwsettings.GetSetting("tune/httpResponseTimeout").(string))
 		writeTimout, _ = time.ParseDuration("1s")
 	}
 

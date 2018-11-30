@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	putil "github.com/CanadianCommander/MicroWeb/pkg/pluginUtil"
+	"github.com/CanadianCommander/MicroWeb/pkg/database"
 )
 
 type FOOBAR struct {
@@ -17,7 +17,7 @@ func HandleRequest(req *http.Request, res http.ResponseWriter, fsName string) bo
 
 func HandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool {
 	if string(req.URL.Path) == "/api/add" {
-		db := putil.GetDatabaseHandle("/tmp/test.db")
+		db := database.GetDatabaseHandle("/tmp/test.db")
 		if db == nil {
 			return false
 		}
@@ -26,7 +26,7 @@ func HandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool {
 		db.Exec("insert into foobar values (\"hello\", \"world\");")
 		fmt.Fprint(res, "ADD")
 	} else if string(req.URL.Path) == "/api/get" {
-		db := putil.GetDatabaseHandle("/tmp/test.db")
+		db := database.GetDatabaseHandle("/tmp/test.db")
 		if db == nil {
 			return false
 		}

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"path"
 	"plugin"
+	"reflect"
 	"sort"
 
 	"github.com/CanadianCommander/MicroWeb/pkg/cache"
@@ -138,6 +139,40 @@ func constructPlugin(plugin *plugin.Plugin) IPlugin {
 	return &NewPlugin
 }
 
+//pluginBinding represents the plugin setting structure in the configuration function
+type pluginBinding struct {
+	Binding string
+	Plugin  string
+}
+
+// AddPluginSettingDecoder adds a decoder for the plugin setting format in the config file.
+func addPluginSettingDecoder() {
+	var pluginPath = "plugin/plugins"
+
+	mwsettings.AddSettingDecoder(mwsettings.NewFunctionalSettingDecoder(func(s interface{}) (string, interface{}) {
+		if reflect.ValueOf(s).Type().Kind() == reflect.Slice {
+			pluginList := s.([]interface{})
+			outList := make([]pluginBinding, len(pluginList))
+
+			for i, plugin := range pluginList {
+				outList[i] = pluginBinding{}
+				outList[i].Binding = plugin.(map[string]interface{})["binding"].(string)
+				outList[i].Plugin = plugin.(map[string]interface{})["plugin"].(string)
+			}
+			return pluginPath, outList
+		}
+
+		logger.LogError("Error parsing plugin list. format incorrect")
+		return "ERROR", nil
+	},
+		func(path string) bool {
+			if path == pluginPath {
+				return true
+			}
+			return false
+		}))
+}
+
 /*
 GetPluginByResourcePath returns the path of the plugin that has the longest binding
 match with the given fsPath or an error if no plugin matches at all.
@@ -146,22 +181,22 @@ Longest match means, given these two bindings
 /index/
 /index/web.html
 the second binding will be selected for fsPath=/index/web.html because it is longer than
-the match produced by the /index/ binding, while for all othere querys, ex fsPath=/index/foo.html
+the match produced by the /index/ binding, while for all other queries, ex fsPath=/index/foo.html
 the frist binding will be used.
 */
 func GetPluginByResourcePath(fsPath string) (string, error) {
-	pluginList := mwsettings.GlobalSettings.GetPluginList()
+	pluginList := mwsettings.GetSetting("plugin/plugins").([]pluginBinding)
 
 	lessFunction := func(i, j int) bool {
-		iDist := StringMatchLength(path.Join(mwsettings.GlobalSettings.GetStaticResourcePath(), pluginList[i].Binding), fsPath)
-		jDist := StringMatchLength(path.Join(mwsettings.GlobalSettings.GetStaticResourcePath(), pluginList[j].Binding), fsPath)
+		iDist := StringMatchLength(path.Join(mwsettings.GetSetting("general/staticDirectory").(string), pluginList[i].Binding), fsPath)
+		jDist := StringMatchLength(path.Join(mwsettings.GetSetting("general/staticDirectory").(string), pluginList[j].Binding), fsPath)
 		return iDist > jDist
 	}
 	sort.Slice(pluginList[:], lessFunction)
 
 	for _, plugin := range pluginList {
-		if StringMatchLength(path.Join(mwsettings.GlobalSettings.GetStaticResourcePath(), plugin.Binding), fsPath) ==
-			len(path.Join(mwsettings.GlobalSettings.GetStaticResourcePath(), plugin.Binding)) {
+		if StringMatchLength(path.Join(mwsettings.GetSetting("general/staticDirectory").(string), plugin.Binding), fsPath) ==
+			len(path.Join(mwsettings.GetSetting("general/staticDirectory").(string), plugin.Binding)) {
 			return plugin.Plugin, nil
 		}
 	}

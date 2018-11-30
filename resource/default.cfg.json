@@ -5,7 +5,7 @@
     "staticDirectory":  "./static/",
     "logFile":          "/etc/microweb/microweb.log",
     "logVerbosity":     "info",
-    "autoReloadSettings": false 
+    "autoReloadSettings": false
   },
 
   "tls": {
@@ -13,7 +13,7 @@
   },
 
   "tune": {
-    "httpReadTimout":       "100ms",
+    "httpReadTimeout":       "100ms",
     "httpResponseTimeout":  "1s",
     "cacheTTL":             "360s"
   }
