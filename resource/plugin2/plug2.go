@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/CanadianCommander/MicroWeb/pkg/pluginUtil"
+	"github.com/CanadianCommander/MicroWeb/pkg/templateHelper"
 )
 
 type FUNCTION struct {
@@ -16,7 +17,7 @@ func (f *FUNCTION) FunctionCall(s string) string {
 func HandleRequest(req *http.Request, res http.ResponseWriter, fsName string) bool {
 	funcStruct := FUNCTION{}
 
-	err := pluginUtil.ProcessTemplateHTML(pluginUtil.ReadFileToBuff(fsName), res, &funcStruct)
+	err := templateHelper.ProcessTemplateHTML(pluginUtil.ReadFileToBuff(fsName), res, &funcStruct)
 	if err != nil {
 		return false
 	}

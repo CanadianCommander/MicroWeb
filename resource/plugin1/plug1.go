@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/CanadianCommander/MicroWeb/pkg/pluginUtil"
+	"github.com/CanadianCommander/MicroWeb/pkg/templateHelper"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -16,7 +17,7 @@ type FOOBAR struct {
 func HandleRequest(req *http.Request, res http.ResponseWriter, fsName string) bool {
 	foobar := FOOBAR{"FOO-BAR"}
 
-	pluginUtil.ProcessTemplateHTML(pluginUtil.ReadFileToBuff(fsName), res, foobar)
+	templateHelper.ProcessTemplateHTML(pluginUtil.ReadFileToBuff(fsName), res, foobar)
 
 	return true
 }

@@ -26,6 +26,10 @@
         {
           "binding": "/api/",
           "plugin":"/tmp/testEnvironment/plugins/testAPIPlugin/testAPIPlugin.so"
+        },
+        {
+          "binding": "/template0.gohtml",
+          "plugin":"/tmp/testEnvironment/plugins/templateUser/templateUser.so"
         }
       ]
   },
@@ -35,6 +39,19 @@
       {
         "driver": "sqlite3",
         "dsn":    "/tmp/test.db"
+      }
+    ]
+  },
+
+  "templateHelper" : {
+    "plugins": [
+      {
+        "plugin": "/tmp/testEnvironment/plugins/template1/template1.so",
+        "name": "template1"
+      },
+      {
+        "plugin": "/tmp/testEnvironment/plugins/template2/template2.so",
+        "name": "template2"
       }
     ]
   }

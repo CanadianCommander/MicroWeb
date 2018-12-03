@@ -10,6 +10,7 @@ import (
 	"github.com/CanadianCommander/MicroWeb/pkg/database"
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
 	mwsettings "github.com/CanadianCommander/MicroWeb/pkg/mwSettings"
+	"github.com/CanadianCommander/MicroWeb/pkg/templateHelper"
 )
 
 var debugLogger *log.Logger
@@ -33,6 +34,7 @@ func main() {
 	addPrimarySettingDecoders()
 	addPluginSettingDecoder()
 	database.AddDatabaseSettingDecoder()
+	templateHelper.AddTemplateHelperSettingDecoders()
 
 	//load settings from cfg file
 	err := mwsettings.LoadSettingsFromFile(mwsettings.GetSetting("configurationFilePath").(string))

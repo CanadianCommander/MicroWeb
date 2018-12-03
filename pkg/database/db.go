@@ -92,7 +92,7 @@ func AddDatabaseSettingDecoder() {
 			return databasePath, outList
 		}
 
-		logger.LogError("Error parsing plugin list. format incorrect")
+		logger.LogError("Error parsing connection list. format incorrect")
 		return "ERROR", nil
 	},
 		func(path string) bool {

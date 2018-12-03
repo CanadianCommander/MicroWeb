@@ -155,6 +155,18 @@ func TestDB(t *testing.T) {
 	}
 }
 
+func TestTemplateHelperPlugin(t *testing.T) {
+	err := doGet("http://localhost:8080/template0.gohtml", 200, func(b []byte) {
+		if bMatch, _ := regexp.MatchString(`The time is: [\w\d\s-():\.]+[.\n]*The Message is: \(Pew Pew!\)\s*$`, string(b)); !bMatch {
+			fmt.Printf("Template did not have the expected output. it was %s\n", string(b))
+			t.Fail()
+		}
+	})
+	if err != nil {
+		t.Fail()
+	}
+}
+
 func doGet(url string, validStatus int, validationFunc func([]byte)) error {
 	var client = http.Client{}
 

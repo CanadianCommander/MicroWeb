@@ -2,10 +2,7 @@ package pluginUtil
 
 import (
 	"bufio"
-	templateHTML "html/template"
-	"io"
 	"os"
-	templateText "text/template"
 
 	"github.com/CanadianCommander/MicroWeb/pkg/cache"
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
@@ -59,35 +56,4 @@ func ReadFileLine(file *os.File) (string, error) {
 	lineBuffer := bufio.NewReader(file)
 	lineB, _, err := (lineBuffer.ReadLine())
 	return string(lineB), err
-}
-
-/*
-ProcessTemplateHTML takes the template described by templateFileBuffer and uses the html/template
-package to parse and execute the template, pushing output on the, out io.Writer.
-The big difference between this and ProcessTemplateText, is that this function performs HTML escaping of text.
-*/
-func ProcessTemplateHTML(templateFileBuffer *[]byte, out io.Writer, tStruct interface{}) error {
-	templateParser := templateHTML.New("root")
-	_, tErr := templateParser.Parse(string((*templateFileBuffer)[:]))
-	if tErr != nil {
-		logger.LogError("could not parse template file w/ error: %s", tErr.Error())
-		return tErr
-	}
-
-	return templateParser.Execute(out, tStruct)
-}
-
-/*
-ProcessTemplateText takes the template described by templateFileBuffer and uses the text/template
-package to parse and execute the template, pushing output on the, out io.Writer.
-*/
-func ProcessTemplateText(templateFileBuffer *[]byte, out io.Writer, tStruct interface{}) error {
-	templateParser := templateText.New("root")
-	_, tErr := templateParser.Parse(string((*templateFileBuffer)[:]))
-	if tErr != nil {
-		logger.LogError("could not parse template file w/ error: %s", tErr.Error())
-		return tErr
-	}
-
-	return templateParser.Execute(out, tStruct)
 }
