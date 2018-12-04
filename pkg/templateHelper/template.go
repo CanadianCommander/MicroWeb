@@ -20,8 +20,8 @@ func AddTemplate(t *templateHTML.Template, name string) (*templateHTML.Template,
 		return nil, err
 	}
 
-	data := plug.getTemplate(t.New(name))
-	t.Funcs(map[string]interface{}{name: func() interface{} { return data }})
+	plug.getTemplate(t.New(name))
+	t.Funcs(map[string]interface{}{name: plug.getData})
 	return t, nil
 }
 

@@ -10,23 +10,26 @@ import (
 	mwsettings "github.com/CanadianCommander/MicroWeb/pkg/mwSettings"
 )
 
-// cache object type string
-const templateHelperCacheItem = "templateHelperPlugin:"
-
 type iTemplatePlugin interface {
-	getTemplate(t *templateHTML.Template) interface{}
+	getTemplate(t *templateHTML.Template)
+	getData(argv interface{}) interface{}
 }
 
 type templatePlugin struct {
-	getTemplateFunc func(t *templateHTML.Template) interface{}
+	getTemplateFunc func(t *templateHTML.Template)
+	getDataFunc     func(argv interface{}) interface{}
 }
 
-func (tp *templatePlugin) getTemplate(t *templateHTML.Template) interface{} {
-	return tp.getTemplateFunc(t)
+func (tp *templatePlugin) getTemplate(t *templateHTML.Template) {
+	tp.getTemplateFunc(t)
+}
+
+func (tp *templatePlugin) getData(argv interface{}) interface{} {
+	return tp.getDataFunc(argv)
 }
 
 func getPlugin(name string) (iTemplatePlugin, error) {
-	plugin := cache.FetchFromCache(templateHelperCacheItem, name)
+	plugin := cache.FetchFromCache(cache.CacheTypeTemplateHelperPlugin, name)
 
 	if plugin != nil {
 		logger.LogVerbose("Loading template helper plugin, %s, from cache", name)
@@ -44,7 +47,7 @@ func getPlugin(name string) (iTemplatePlugin, error) {
 		return nil, err
 	}
 
-	cache.AddToCacheTTLOverride(templateHelperCacheItem, name, cache.MaxTTL, newPlugin)
+	cache.AddToCacheTTLOverride(cache.CacheTypeTemplateHelperPlugin, name, cache.MaxTTL, newPlugin)
 	return newPlugin, nil
 
 }
@@ -67,15 +70,23 @@ func loadPluginFromFile(path string) (iTemplatePlugin, error) {
 		return nil, pErr
 	}
 
-	newFunc, pErr := rawPlugin.Lookup("GetTemplate")
+	getTemplate, pErr := rawPlugin.Lookup("GetTemplate")
+	if pErr != nil {
+		return nil, pErr
+	}
+	getData, pErr := rawPlugin.Lookup("GetData")
 	if pErr != nil {
 		return nil, pErr
 	}
 
 	var bOk bool
-	newTemplatePlugin.getTemplateFunc, bOk = newFunc.(func(t *templateHTML.Template) interface{})
+	newTemplatePlugin.getTemplateFunc, bOk = getTemplate.(func(t *templateHTML.Template))
 	if !bOk {
-		return nil, errors.New("GetTemplate() is not of correct format. should be: func(t *templateHTML.Template) interface{}")
+		return nil, errors.New("GetTemplate() is not of correct format. should be: func(t *templateHTML.Template)")
+	}
+	newTemplatePlugin.getDataFunc, bOk = getData.(func(argv interface{}) interface{})
+	if !bOk {
+		return nil, errors.New("GetData() is not of correct format. should be: func(argv interface{}) interface{}")
 	}
 
 	return &newTemplatePlugin, nil

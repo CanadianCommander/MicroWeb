@@ -19,7 +19,7 @@ func TestTemplatePlugins(t *testing.T) {
 	//setup
 	cache.StartCache()
 	//load settings
-	logger.LogToStd(logger.VDebug)
+	logger.LogToStd(logger.VError)
 	mwsettings.RemoveAllSettingDecoders()
 	mwsettings.ClearSettings()
 	AddTemplateHelperSettingDecoders()
@@ -55,6 +55,7 @@ func TestTemplatePlugins(t *testing.T) {
 		if err != nil {
 			fmt.Print(err.Error())
 		}
+		fmt.Printf("Output does not match expected output! output is: \n%s\n", output.String())
 		t.Fail()
 	}
 }

@@ -9,25 +9,24 @@ import (
 	"github.com/CanadianCommander/MicroWeb/pkg/pluginUtil"
 )
 
-func GetTemplate(template *template.Template) interface{} {
+func GetTemplate(template *template.Template) {
 
 	// read template file
 	fileData := pluginUtil.ReadFileToBuff(path.Join(mwsettings.GetSetting("general/staticDirectory").(string), "template2.gohtml"))
 	if fileData == nil {
 		logger.LogError("Failed to open templage file!")
-		return nil
 	}
 
 	// parse template
 	_, tErr := template.Parse(string((*fileData)[:]))
 	if tErr != nil {
 		logger.LogError("could not parse template file w/ error: %s", tErr.Error())
-		return nil
 	}
+}
 
+func GetData(argv interface{}) interface{} {
 	type foobar struct {
 		Msg string
 	}
-
-	return &foobar{"Pew Pew!"}
+	return &foobar{argv.(string)}
 }

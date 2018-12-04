@@ -6,9 +6,10 @@ import (
 
 //cache object "types"
 const (
-	CacheTypeResource = "static:"
-	CacheTypePlugin   = "Plugin:"
-	CacheTypeDatabase = "Database:"
+	CacheTypeResource             = "static:"
+	CacheTypePlugin               = "Plugin:"
+	CacheTypeDatabase             = "Database:"
+	CacheTypeTemplateHelperPlugin = "templateHelperPlugin:"
 )
 
 //MaxTTL is the max possible TTL value (aprox 290 years)
