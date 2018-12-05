@@ -2,7 +2,7 @@
   "general": {
     "TCPProtocol":      "tcp4",
     "TCPPort":          ":80",
-    "staticDirectory":  "./static/",
+    "staticDirectory":  "var/www/",
     "logFile":          "/var/log/microweb.log",
     "logVerbosity":     "info"
   },
