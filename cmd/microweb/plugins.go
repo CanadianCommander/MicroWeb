@@ -145,8 +145,8 @@ type pluginBinding struct {
 	Plugin  string
 }
 
-// AddPluginSettingDecoder adds a decoder for the plugin setting format in the config file.
-func addPluginSettingDecoder() {
+//AddPluginSettingDecoder adds a decoder for the plugin setting format in the config file.
+func AddPluginSettingDecoder() {
 	var pluginPath = "plugin/plugins"
 
 	mwsettings.AddSettingDecoder(mwsettings.NewFunctionalSettingDecoder(func(s interface{}) (string, interface{}) {

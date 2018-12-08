@@ -31,8 +31,9 @@ func main() {
 	}
 
 	// build main program setting decoders
-	addPrimarySettingDecoders()
-	addPluginSettingDecoder()
+	AddPrimarySettingDecoders()
+	AddPluginSettingDecoder()
+	AddSecuritySettingDecoders()
 	database.AddDatabaseSettingDecoder()
 	templateHelper.AddTemplateHelperSettingDecoders()
 
@@ -73,12 +74,16 @@ func main() {
 	if err != nil {
 		logger.LogError("Failed to start webserver")
 	} else {
+		EmitSecurityWarning()
+		// drop root privileges
+		DropRootPrivilege()
 		//start web server
 		httpServer.ServeHTTP()
 	}
 }
 
-func addPrimarySettingDecoders() {
+//AddPrimarySettingDecoders add basic setting decoders
+func AddPrimarySettingDecoders() {
 	basicSettings := []string{"general/TCPProtocol", "general/TCPPort", "general/staticDirectory",
 		"general/logFile", "general/logVerbosity", "general/autoReloadSettings",
 		"tls/enableTLS", "tls/certFile", "tls/keyFile", "tune/httpReadTimeout",

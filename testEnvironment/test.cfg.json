@@ -20,6 +20,11 @@
     "cacheTTL":             "60s"
   },
 
+  "security": {
+    "user": "www-data",
+    "strict": true
+  },
+
   "plugin": {
     "plugins":
       [
@@ -30,6 +35,10 @@
         {
           "binding": "/template0.gohtml",
           "plugin":"/tmp/testEnvironment/plugins/templateUser/templateUser.so"
+        },
+        {
+          "binding":"/uid",
+          "plugin":"/tmp/testEnvironment/plugins/uidPrint/uidPrint.so"
         }
       ]
   },
