@@ -185,19 +185,21 @@ the match produced by the /index/ binding, while for all other queries, ex fsPat
 the frist binding will be used.
 */
 func GetPluginByResourcePath(fsPath string) (string, error) {
-	pluginList := mwsettings.GetSetting("plugin/plugins").([]pluginBinding)
+	if mwsettings.HasSetting("plugin/plugins") {
+		pluginList := mwsettings.GetSetting("plugin/plugins").([]pluginBinding)
 
-	lessFunction := func(i, j int) bool {
-		iDist := StringMatchLength(path.Join(mwsettings.GetSetting("general/staticDirectory").(string), pluginList[i].Binding), fsPath)
-		jDist := StringMatchLength(path.Join(mwsettings.GetSetting("general/staticDirectory").(string), pluginList[j].Binding), fsPath)
-		return iDist > jDist
-	}
-	sort.Slice(pluginList[:], lessFunction)
+		lessFunction := func(i, j int) bool {
+			iDist := StringMatchLength(path.Join(mwsettings.GetSettingString("general/staticDirectory"), pluginList[i].Binding), fsPath)
+			jDist := StringMatchLength(path.Join(mwsettings.GetSettingString("general/staticDirectory"), pluginList[j].Binding), fsPath)
+			return iDist > jDist
+		}
+		sort.Slice(pluginList[:], lessFunction)
 
-	for _, plugin := range pluginList {
-		if StringMatchLength(path.Join(mwsettings.GetSetting("general/staticDirectory").(string), plugin.Binding), fsPath) ==
-			len(path.Join(mwsettings.GetSetting("general/staticDirectory").(string), plugin.Binding)) {
-			return plugin.Plugin, nil
+		for _, plugin := range pluginList {
+			if StringMatchLength(path.Join(mwsettings.GetSettingString("general/staticDirectory"), plugin.Binding), fsPath) ==
+				len(path.Join(mwsettings.GetSettingString("general/staticDirectory"), plugin.Binding)) {
+				return plugin.Plugin, nil
+			}
 		}
 	}
 

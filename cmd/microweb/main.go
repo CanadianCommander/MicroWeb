@@ -38,7 +38,7 @@ func main() {
 	templateHelper.AddTemplateHelperSettingDecoders()
 
 	//load settings from cfg file
-	err := mwsettings.LoadSettingsFromFile(mwsettings.GetSetting("configurationFilePath").(string))
+	err := mwsettings.LoadSettingsFromFile(mwsettings.GetSettingString("configurationFilePath"))
 	if err != nil {
 		logger.LogWarning("Could not load settings from configuration file! with error %s\n", err.Error())
 	}
@@ -47,8 +47,17 @@ func main() {
 		logger.LogError("Could not parse settings! with error %s \n", err.Error())
 	}
 
-	if mwsettings.GetSetting("general/autoReloadSettings").(bool) {
-		stopChanAutoLoad := mwsettings.WatchConfigurationFile(mwsettings.GetSetting("configurationFilePath").(string))
+	//update logging configuration
+	if mwsettings.HasSetting("general/logFile") {
+		logVerbosity := logger.VVerbose
+		if mwsettings.HasSetting("general/logVerbosity") {
+			logVerbosity = logger.VerbosityStringToEnum(mwsettings.GetSettingString("general/logVerbosity"))
+		}
+		logger.LogToStdAndFile(logVerbosity, mwsettings.GetSettingString("general/logFile"))
+	}
+
+	if mwsettings.GetSettingBool("general/autoReloadSettings") {
+		stopChanAutoLoad := mwsettings.WatchConfigurationFile(mwsettings.GetSettingString("configurationFilePath"))
 		defer close(stopChanAutoLoad)
 	}
 
@@ -60,17 +69,19 @@ func main() {
 	cache.StartCache()
 	// if settings change update ttl
 	mwsettings.AddSettingListener(func() {
-		newTTL, parseError := time.ParseDuration(mwsettings.GetSetting("tune/cacheTTL").(string))
+		newTTL, parseError := time.ParseDuration(mwsettings.GetSettingString("tune/cacheTTL"))
 		if parseError == nil {
 			cache.UpdateCacheTTL(newTTL)
 		}
 	})
 
-	database.OpenDatabaseHandles(mwsettings.GetSetting("database/connections").([]database.ConnectionSettings))
-	defer database.CloseAllDatabaseHandles()
+	if mwsettings.HasSetting("database/connections") {
+		database.OpenDatabaseHandles(mwsettings.GetSetting("database/connections").([]database.ConnectionSettings))
+		defer database.CloseAllDatabaseHandles()
+	}
 
 	//create webserver
-	httpServer, err := CreateHTTPServer(mwsettings.GetSetting("general/TCPPort").(string), mwsettings.GetSetting("general/TCPProtocol").(string), logger.GetErrorLogger())
+	httpServer, err := CreateHTTPServer(mwsettings.GetSettingString("general/TCPPort"), mwsettings.GetSettingString("general/TCPProtocol"), logger.GetErrorLogger())
 	if err != nil {
 		logger.LogError("Failed to start webserver")
 	} else {

@@ -1,10 +1,11 @@
 {
   "general": {
-    "TCPProtocol":      "tcp4",
-    "TCPPort":          ":80",
-    "staticDirectory":  "var/www/",
-    "logFile":          "/var/log/microweb.log",
-    "logVerbosity":     "info"
+    "TCPProtocol":        "tcp4",
+    "TCPPort":            ":80",
+    "staticDirectory":    "/var/www/",
+    "logFile":            "/var/log/microweb.log",
+    "logVerbosity":       "info",
+    "autoReloadSettings": false
   },
 
   "tls": {
@@ -12,8 +13,13 @@
   },
 
   "tune": {
-    "httpReadTimout":       "100ms",
+    "httpReadTimeout":      "100ms",
     "httpResponseTimeout":  "1s",
     "cacheTTL":             "360s"
+  },
+
+  "security": {
+    "user":   "www-data",
+    "strict": true
   }
 }

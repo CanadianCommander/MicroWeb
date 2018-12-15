@@ -30,7 +30,7 @@ func EmitSecurityWarning() {
 
 //AbortIfStrict aborts the program immediately if strict security mode is enabled
 func AbortIfStrict() {
-	if mwsettings.HasSetting("security/strict") && mwsettings.GetSetting("security/strict").(bool) {
+	if mwsettings.HasSetting("security/strict") && mwsettings.GetSettingBool("security/strict") {
 		logger.LogError("Security violation and strict mode enabled! ABORTING!")
 		os.Exit(1)
 	}
@@ -43,7 +43,7 @@ the configuration file under security/user
 func DropRootPrivilege() {
 	// check that we are root
 	if syscall.Getuid() == 0 && mwsettings.HasSetting("security/user") {
-		uname := mwsettings.GetSetting("security/user").(string)
+		uname := mwsettings.GetSettingString("security/user")
 		userStruct := C.getpwnam(C.CString(uname))
 		if userStruct != nil {
 			/*
@@ -61,9 +61,9 @@ func DropRootPrivilege() {
 				logger.LogError("Failed to set gid with errno: %d", errno)
 				AbortIfStrict()
 			}
-			logger.LogInfo("ROOT Privieges dropped to those of %s", uname)
+			logger.LogInfo("ROOT Privieges dropped to those of [%s]", uname)
 		} else {
-			logger.LogError("Could not drop privilege to specified user: %s", uname)
+			logger.LogError("Could not drop privilege to specified user: [%s]", uname)
 			AbortIfStrict()
 		}
 	}

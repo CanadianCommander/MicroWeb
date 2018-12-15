@@ -23,13 +23,58 @@ var allSettings interface{}
 var settingLock = sync.Mutex{}
 
 /*
-GetSetting return the requested setting or nil + error if key is not found.
+GetSetting return the requested setting or nil.
 */
 func GetSetting(path string) interface{} {
 	settingLock.Lock()
 	defer settingLock.Unlock()
 
 	return settingMap[path]
+}
+
+/*
+GetSettingString like GetSetting but it returns a string or string{} (zero value)
+if the key is not found.
+*/
+func GetSettingString(path string) string {
+	settingLock.Lock()
+	defer settingLock.Unlock()
+
+	val, bOk := settingMap[path]
+	if !bOk {
+		val = ""
+	}
+	return val.(string)
+}
+
+/*
+GetSettingBool is like GetSetting but it retruns a bool or bool {} (zero value) if
+the key is not found.
+*/
+func GetSettingBool(path string) bool {
+	settingLock.Lock()
+	defer settingLock.Unlock()
+
+	val, bOk := settingMap[path]
+	if !bOk {
+		val = false
+	}
+	return val.(bool)
+}
+
+/*
+GetSettingInt is like GetSetting but it retruns a int or int {} (zero value) if
+the key is not found.
+*/
+func GetSettingInt(path string) int {
+	settingLock.Lock()
+	defer settingLock.Unlock()
+
+	val, bOk := settingMap[path]
+	if !bOk {
+		val = 0
+	}
+	return val.(int)
 }
 
 // AddSetting adds a new setting to the settings map.

@@ -117,11 +117,12 @@ URLToFilesystem takes a url and resolves it to a file system path, if possible,
 taking in to account the global setting for static resource path.
 */
 func URLToFilesystem(url string) (string, error) {
-	templatePath := path.Join(mwsettings.GetSetting("general/staticDirectory").(string), url)
+	webRoot := mwsettings.GetSettingString("general/staticDirectory")
+	templatePath := path.Join(webRoot, url)
 
 	// if some how url contains '..' characters we could accidentally expose the entire filesystem
 	// make sure we are still within the static resource path
-	if !strings.Contains(templatePath, path.Clean(mwsettings.GetSetting("general/staticDirectory").(string))) {
+	if !strings.Contains(templatePath, path.Clean(mwsettings.GetSettingString("general/staticDirectory"))) {
 		logger.LogWarning("Suspicius URL activity. URL resolved to: %s", templatePath)
 		return "", errors.New("URL invalid")
 	}
@@ -134,10 +135,12 @@ func URLToFilesystem(url string) (string, error) {
 	if fInfo.IsDir() {
 		logger.LogVerbose("Requested resource is directory. Redirecting to index file")
 		//attempt to redirect to go index file
-		templatePath, err = URLToFilesystem(path.Join(url, "index.gohtml"))
+		templatePath = path.Join(webRoot, path.Join(url, "index.gohtml"))
+		fInfo, err = os.Stat(templatePath)
 		if err != nil {
 			//attempt to redirect to standard html index file
-			templatePath, err = URLToFilesystem(path.Join(url, "index.html"))
+			templatePath = path.Join(webRoot, path.Join(url, "index.html"))
+			fInfo, err = os.Stat(templatePath)
 			if err != nil {
 				logger.LogInfo("Requsted resource is directory and nether \"index.gohtml\" nor \"index.html\" exist in it")
 				return templatePath, errors.New("File not Found")

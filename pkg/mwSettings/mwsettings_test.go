@@ -32,6 +32,14 @@ func TestDecoders(t *testing.T) {
 			t.Fail()
 		}
 	}
+
+	if !GetSettingBool("general/autoReloadSettings") {
+		if !(GetSettingString("general/TCPProtocol") == "tcp4") {
+			t.Fail()
+		}
+	} else {
+		t.Fail()
+	}
 }
 
 func TestDecoderRemove(t *testing.T) {
