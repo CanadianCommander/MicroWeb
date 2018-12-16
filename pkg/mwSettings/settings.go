@@ -309,7 +309,7 @@ func WatchConfigurationFile(configFilePath string) chan bool {
 					ParseSettings()
 				}
 			case err := <-fileWatcher.Errors:
-				logger.LogError("Got error while watching configuration file: ", err.Error())
+				logger.LogError("Got error while watching configuration file: %s", err.Error())
 			case _, isOpen := <-doneChan:
 				if !isOpen {
 					fileWatcher.Close()
