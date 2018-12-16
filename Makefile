@@ -25,6 +25,7 @@ clean:
 
 .PHONY: test
 test:
+	$(GOTEST) ./cmd/microweb #<- this installs testing infrastructure and must be run first 
 	$(GOTEST) $(GOTEST_FLAGS) $(TEST_PKGS) || (echo '=== TEST FAILED ==='; exit 1) && echo "=== TEST PASS ==="
 
 .PHONY: getdep
