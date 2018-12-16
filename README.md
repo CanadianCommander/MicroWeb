@@ -1,4 +1,4 @@
-# MicroWeb [![Travis](https://travis-ci.org/CanadianCommander/MicroWeb.svg?branch=master) ![go report card](https://goreportcard.com/badge/github.com/CanadianCommander/MicroWeb)](https://goreportcard.com/report/github.com/CanadianCommander/MicroWeb)
+# MicroWeb [![Travis](https://travis-ci.com/CanadianCommander/MicroWeb.svg?branch=master) ![go report card](https://goreportcard.com/badge/github.com/CanadianCommander/MicroWeb)](https://goreportcard.com/report/github.com/CanadianCommander/MicroWeb)
 micro web is a simple and efficient web server intended to let you deploy simple sites FAST. It allows you to server basic static content over HTTP/HTTPS or if you want to get a little bit more fancy you can break out a plugin and customize the behaviour.
 ## Features
 - Simple and light HTTP/HTTPS server
