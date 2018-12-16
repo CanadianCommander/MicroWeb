@@ -50,7 +50,7 @@ func TestTemplatePlugins(t *testing.T) {
 
 	output := strings.Builder{}
 	myTemplate.Execute(&output, nil)
-	bMatch, err := regexp.MatchString(`The time is: [\w\d\s-():\.]+[.\n]*The Message is: \(Pew Pew!\)\s*$`, output.String())
+	bMatch, err := regexp.MatchString(`The time is: [\w\d\s-():\.&#]+[.\n]*The Message is: \(Pew Pew!\)\s*$`, output.String())
 	if !bMatch || err != nil {
 		if err != nil {
 			fmt.Print(err.Error())
