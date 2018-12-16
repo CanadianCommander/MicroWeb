@@ -1,0 +1,10 @@
+language: go
+
+go:
+  - "1.11.x"
+
+before_install: make getdep
+
+install: make build
+
+script: make test

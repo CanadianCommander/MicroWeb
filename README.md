@@ -1,22 +1,26 @@
-# MicroWeb [![go report card](https://goreportcard.com/badge/github.com/CanadianCommander/MicroWeb)](https://goreportcard.com/report/github.com/CanadianCommander/MicroWeb)
-micro web is a simple and efficient web server intended to let you deploy simpile sites FAST. This is not a library! Rather one
-would build the micro web executable and through go templates and plugins would customize the server (even possible to do this while the server is running with no downtime).
-## Require
-Linux / Mac OSX. 
+# MicroWeb [![Travis](https://travis-ci.org/CanadianCommander/MicroWeb.svg?branch=master) ![go report card](https://goreportcard.com/badge/github.com/CanadianCommander/MicroWeb)](https://goreportcard.com/report/github.com/CanadianCommander/MicroWeb)
+micro web is a simple and efficient web server intended to let you deploy simple sites FAST. It allows you to server basic static content over HTTP/HTTPS or if you want to get a little bit more fancy you can break out a plugin and customize the behaviour.
+## Features
+- Simple and light HTTP/HTTPS server
+- golang plugin system allowing for customization of server behaviour / web API development
+- helper packages to assist in plugin development
+- systemd integration
 
-Note: there is no out of the box "service" support on Mac. On linux systemd is leveraged. use `<project root>/install/install.sh` to auto-magically install it to your systemd (if you want it to run at boot dont forget to enable it, `systemctl enable microweb`)
+## OS Support
+**Official:** Linux x86_64
+
+**Unofficial**: MacOs,  *might work!*
 ## Build
 - Download with `go get github.com/CanadianCommander/MicroWeb`
-- To build run
-`go build github.com/CanadianCommander/MicroWeb/cmd/microweb`
-- After the server is built modify `resource/default.cfg.json` as needed.
-- Next build any required go plugins
-- Finally test the server with `./microWeb -c <config file path> -v verbose`
+- Get dependencies with `make getdep`
+- Build with `make` or `make build`
+- Finally test the server with `./microweb.a -c <config file path> -v verbose`
 
-## Install 
-to install microweb on to your system (create configuration files under /etc/microweb and install unit file for systemd) run 
+## Install
+- Download with `go get github.com/CanadianCommander/MicroWeb`
+- Get dependencies with `make getdep`
+- Install with `make install`
+- Server binary is now installed in `/bin/`, configuration files in `/etc/microweb/`, and webroot in `/var/www/`. to manage the server use systemctl. Ex: `systemctl status microweb`, `systemctl start microweb`... etc. Finally to get the logs use `journalctl -u microweb`
 
-`sudo -E ./install/install.sh` then run the server with `sudo systemctl start microweb`
-
-## Documentation 
+## Documentation
 [wiki](https://github.com/CanadianCommander/MicroWeb/wiki)
