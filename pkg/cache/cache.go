@@ -9,6 +9,9 @@ import (
 	"regexp"
 	"sync"
 	"time"
+
+	"github.com/CanadianCommander/MicroWeb/pkg/logger"
+	mwsettings "github.com/CanadianCommander/MicroWeb/pkg/mwSettings"
 )
 
 //cache settings
@@ -45,6 +48,21 @@ type cacheObject struct {
 	object    interface{}
 	timeStamp time.Time
 	ttl       time.Duration
+}
+
+//AddCacheSettingDecoders adds setting decoders for cache settings in config file
+func AddCacheSettingDecoders() {
+	mwsettings.AddSettingDecoder(mwsettings.NewBasicDecoder("tune/cacheTTL"))
+	mwsettings.AddSettingListener(func() {
+		TTLString := mwsettings.GetSettingString("tune/cacheTTL")
+		TTL, err := time.ParseDuration(TTLString)
+		if err != nil {
+			logger.LogError("Could not parse TTL time string [%s] from configuration file with error: %s", TTLString, err.Error())
+			return
+		}
+
+		UpdateCacheTTL(TTL)
+	})
 }
 
 //-------------------- front end methods --------------------------------

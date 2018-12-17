@@ -1,6 +1,7 @@
 package mwsettings
 
 import (
+	"bufio"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -12,7 +13,6 @@ import (
 	"time"
 
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
-	"github.com/CanadianCommander/MicroWeb/pkg/pluginUtil"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -263,7 +263,7 @@ func WaitForReload(reloadFifoFile string) chan bool {
 		for {
 			select {
 			case <-checkInterval.C:
-				msg, err := pluginUtil.ReadFileLine(reloadFifo)
+				msg, err := readFileLine(reloadFifo)
 				if err != nil {
 					logger.LogError("Error reading reload fifo: %s", err.Error())
 					continue
@@ -283,6 +283,12 @@ func WaitForReload(reloadFifoFile string) chan bool {
 	}()
 
 	return closeChan
+}
+
+func readFileLine(file *os.File) (string, error) {
+	lineBuffer := bufio.NewReader(file)
+	lineB, _, err := (lineBuffer.ReadLine())
+	return string(lineB), err
 }
 
 /*
