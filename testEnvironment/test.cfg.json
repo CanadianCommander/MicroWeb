@@ -56,11 +56,13 @@
     "plugins": [
       {
         "plugin": "/tmp/testEnvironment/plugins/template1/template1.so",
-        "name": "template1"
+        "name": "template1",
+        "group": "one"
       },
       {
         "plugin": "/tmp/testEnvironment/plugins/template2/template2.so",
-        "name": "template2"
+        "name": "template2",
+        "group": ["one", "two"]
       }
     ]
   }

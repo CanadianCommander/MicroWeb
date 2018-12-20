@@ -62,6 +62,38 @@ func pathFromTemplateName(name string) (string, error) {
 	return "", errors.New("No template plugin for name: " + name)
 }
 
+func pathsFromGroupName(groupName string) ([]string, error) {
+	pList := mwsettings.GetSetting("templateHelper/plugins").([]TemplatePluginSettings)
+	var outList []string
+
+	for _, plugin := range pList {
+		for _, gname := range plugin.Groups {
+			if gname == groupName {
+				outList = append(outList, plugin.PluginPath)
+				break
+			}
+		}
+	}
+
+	return outList, nil
+}
+
+func namesFromGroupName(groupName string) ([]string, error) {
+	pList := mwsettings.GetSetting("templateHelper/plugins").([]TemplatePluginSettings)
+	var outList []string
+
+	for _, plugin := range pList {
+		for _, gname := range plugin.Groups {
+			if gname == groupName {
+				outList = append(outList, plugin.TemplateName)
+				break
+			}
+		}
+	}
+
+	return outList, nil
+}
+
 func loadPluginFromFile(path string) (iTemplatePlugin, error) {
 	newTemplatePlugin := templatePlugin{}
 	rawPlugin, pErr := plugin.Open(path)

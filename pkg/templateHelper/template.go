@@ -26,6 +26,22 @@ func AddTemplate(t *templateHTML.Template, name string) (*templateHTML.Template,
 }
 
 /*
+AddTemplateGroup is like AddTemplate but instead of adding a single named template it adds all templates of the specified group.
+*/
+func AddTemplateGroup(t *templateHTML.Template, groupName string) (*templateHTML.Template, error) {
+	nameList, _ := namesFromGroupName(groupName)
+
+	for _, name := range nameList {
+		_, err := AddTemplate(t, name)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return t, nil
+}
+
+/*
 ProcessTemplateHTML takes the template described by templateFileBuffer and uses the html/template
 package to parse and execute the template, pushing output on the, out io.Writer.
 The big difference between this and ProcessTemplateText, is that this function performs HTML escaping of text.
@@ -60,6 +76,7 @@ func ProcessTemplateText(templateFileBuffer *[]byte, out io.Writer, tStruct inte
 type TemplatePluginSettings struct {
 	PluginPath,
 	TemplateName string
+	Groups []string
 }
 
 // AddTemplateHelperSettingDecoders adds a decoder for the template Helper setting format in the config file.
@@ -75,6 +92,18 @@ func AddTemplateHelperSettingDecoders() {
 				outList[i] = TemplatePluginSettings{}
 				outList[i].PluginPath = p.(map[string]interface{})["plugin"].(string)
 				outList[i].TemplateName = p.(map[string]interface{})["name"].(string)
+
+				group, bOk := p.(map[string]interface{})["group"]
+				if bOk {
+					if reflect.ValueOf(group).Type().Kind() == reflect.Slice {
+						for _, str := range group.([]interface{}) {
+							outList[i].Groups = append(outList[i].Groups, str.(string))
+						}
+					} else {
+						outList[i].Groups = make([]string, 1)
+						outList[i].Groups[0] = group.(string)
+					}
+				}
 			}
 			return templateHelperPath, outList
 		}
