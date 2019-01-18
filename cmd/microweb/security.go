@@ -2,11 +2,13 @@ package main
 
 // #include <pwd.h>
 // #include <unistd.h>
+// #include <stdlib.h>
 import "C"
 
 import (
 	"os"
 	"syscall"
+	"unsafe"
 
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
 	mwsettings "github.com/CanadianCommander/MicroWeb/pkg/mwSettings"
@@ -44,7 +46,10 @@ func DropRootPrivilege() {
 	// check that we are root
 	if syscall.Getuid() == 0 && mwsettings.HasSetting("security/user") {
 		uname := mwsettings.GetSettingString("security/user")
-		userStruct := C.getpwnam(C.CString(uname))
+		Cuname := C.CString(uname)
+		defer C.free(unsafe.Pointer(Cuname))
+		userStruct := C.getpwnam(Cuname)
+
 		if userStruct != nil {
 			/*
 				use low level C functions instead of syscall.Setgid / syscall.Setuid.
