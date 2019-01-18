@@ -8,7 +8,7 @@ else
   echo -n "Installing...."
   INSTALL_DIR=`dirname "$0"`
 
-  mkdir -p /var/www
+  mkdir -p /var/www /etc/microweb 
   cp ${INSTALL_DIR}/microweb.cfg.json /etc/microweb/
 
   go build -o /bin/microweb github.com/CanadianCommander/MicroWeb/cmd/microweb/
