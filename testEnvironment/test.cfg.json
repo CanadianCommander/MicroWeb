@@ -17,7 +17,8 @@
   "tune": {
     "httpReadTimeout":       "100ms",
     "httpResponseTimeout":  "100ms",
-    "cacheTTL":             "60s"
+    "cacheTTL":             "60s",
+    "max-age":              "86400"
   },
 
   "security": {

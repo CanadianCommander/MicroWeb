@@ -99,7 +99,7 @@ func AddPrimarySettingDecoders() {
 	basicSettings := []string{"general/TCPProtocol", "general/TCPPort", "general/staticDirectory",
 		"general/logFile", "general/logVerbosity", "general/autoReloadSettings",
 		"tls/enableTLS", "tls/certFile", "tls/keyFile", "tune/httpReadTimeout",
-		"tune/httpResponseTimeout"}
+		"tune/httpResponseTimeout", "tune/max-age"}
 
 	for _, set := range basicSettings {
 		basicDec := mwsettings.NewBasicDecoder(set)

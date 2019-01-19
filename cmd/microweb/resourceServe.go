@@ -48,6 +48,7 @@ func handleRequest(res http.ResponseWriter, req *http.Request) bool {
 		if buff != nil {
 			mimeType := mime.TypeByExtension(path.Ext(fsPath))
 			res.Header().Add("Content-Type", mimeType)
+			res.Header().Add("Cache-Control", "max-age="+mwsettings.GetSettingString("tune/max-age"))
 			res.Write((*buff)[:])
 		} else {
 			res.WriteHeader(500)
