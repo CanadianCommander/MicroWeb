@@ -22,10 +22,16 @@ ServeHTTP start the http server. BLOCKS until server exits
 func (svr *HTTPServer) ServeHTTP() {
 	if mwsettings.GetSettingBool("tls/enableTLS") {
 		logger.LogInfo("Serving HTTPS on: %s", svr.tcpListener.Addr().String())
-		svr.server.ServeTLS(svr.tcpListener, mwsettings.GetSettingString("tls/certFile"), mwsettings.GetSettingString("tls/keyFile"))
+		err := svr.server.ServeTLS(svr.tcpListener, mwsettings.GetSettingString("tls/certFile"), mwsettings.GetSettingString("tls/keyFile"))
+		if err != nil {
+			logger.LogError("Could not server HTTPS with error: %s", err.Error())
+		}
 	} else {
 		logger.LogInfo("Serving HTTP on: %s", svr.tcpListener.Addr().String())
-		svr.server.Serve(svr.tcpListener)
+		err := svr.server.Serve(svr.tcpListener)
+		if err != nil {
+			logger.LogError("Could not server HTTP with error: %s", err.Error())
+		}
 	}
 }
 
