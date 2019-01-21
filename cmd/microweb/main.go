@@ -97,8 +97,8 @@ func main() {
 //AddPrimarySettingDecoders add basic setting decoders
 func AddPrimarySettingDecoders() {
 	basicSettings := []string{"general/TCPProtocol", "general/TCPPort", "general/staticDirectory",
-		"general/logFile", "general/logVerbosity", "general/autoReloadSettings",
-		"tls/enableTLS", "tls/certFile", "tls/keyFile", "tune/httpReadTimeout",
+		"general/logFile", "general/logVerbosity", "general/autoReloadSettings", "general/redirectPorts",
+		"general/redirectURL", "tls/enableTLS", "tls/certFile", "tls/keyFile", "tune/httpReadTimeout",
 		"tune/httpResponseTimeout", "tune/max-age"}
 
 	for _, set := range basicSettings {

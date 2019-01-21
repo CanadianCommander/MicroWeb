@@ -167,6 +167,21 @@ func TestTemplateHelperPlugin(t *testing.T) {
 	}
 }
 
+func TestRedirect(t *testing.T) {
+	checkFunc := func(b []byte) {
+		if string(b) != "index.html\n" {
+			fmt.Printf("Got: %s Expecting: %s\n", string(b), "index.html")
+			t.Fail()
+		}
+	}
+
+	err1 := doGet("http://localhost:8081/", 200, checkFunc)
+	err2 := doGet("http://localhost:9090/", 200, checkFunc)
+	if err1 != nil || err2 != nil {
+		t.Fail()
+	}
+}
+
 func doGet(url string, validStatus int, validationFunc func([]byte)) error {
 	var client = http.Client{}
 

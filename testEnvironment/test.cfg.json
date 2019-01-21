@@ -5,7 +5,9 @@
     "staticDirectory":  "/tmp/testEnvironment/web/",
     "logFile":          "/tmp/microWeb.log",
     "logVerbosity":     "verbose",
-    "autoReloadSettings": false
+    "autoReloadSettings": false,
+    "redirectPorts": [":8081", ":9090"],
+    "redirectURL": "http://127.0.0.1"
   },
 
   "tls": {
