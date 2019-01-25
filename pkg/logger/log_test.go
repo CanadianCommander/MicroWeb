@@ -1,9 +1,15 @@
 package logger
 
 import (
+	"compress/gzip"
+	"fmt"
 	"io"
+	"io/ioutil"
+	"os"
+	"path"
 	"regexp"
 	"testing"
+	"time"
 )
 
 //test support stuff
@@ -139,4 +145,119 @@ func SubtestTestVerbosity(t *testing.T, tw *testWriter, verbosity int) {
 		}
 	}
 
+}
+
+func TestRealFileLog(t *testing.T) {
+	testFile, err := ioutil.TempFile("/tmp/", "mwLogger-")
+	if err != nil {
+		fmt.Print(err.Error())
+		t.Fail()
+	}
+	defer os.Remove(testFile.Name())
+
+	LogToFile(VDebug, testFile.Name())
+	LogError("TEST")
+
+	logContent, err := ioutil.ReadAll(testFile)
+	if err != nil {
+		fmt.Print(err.Error())
+		t.Fail()
+		return
+	}
+
+	bMatch, err := regexp.MatchString(`ERROR:[\d\s:/]+TEST`, string(logContent))
+	if err != nil {
+		fmt.Print(err.Error())
+		t.Fail()
+		return
+	}
+	if !bMatch {
+		fmt.Printf("Log did not contain expected content. expecting \"ERROR:[\\d\\s:/]+TEST\" got \"%s\"", string(logContent))
+		t.Fail()
+		return
+	}
+
+}
+
+func TestLogRotate(t *testing.T) {
+	testFile, err := ioutil.TempFile("/tmp/", "mwLogger-")
+	if err != nil {
+		fmt.Print(err.Error())
+		t.Fail()
+		return
+	}
+	defer os.Remove(testFile.Name())
+
+	testFile.Close()
+	LogToFile(VDebug, testFile.Name())
+	LogError("OMFG the server is on FIRE!")
+	for i := 0; i < 1000; i++ {
+		LogError("Send HELP!")
+	}
+
+	err = RotateLogFile(path.Base(testFile.Name())+".rotated.gz", true)
+	time.Sleep(50 * time.Millisecond) // <- wait for background gzip of log to complete
+	if err != nil {
+		fmt.Print("Failed to rotate log with error: " + err.Error())
+		t.Fail()
+		return
+	}
+	defer os.Remove(testFile.Name() + ".rotated.gz")
+	LogWarning("New MSG")
+
+	//check new msg in log and not other rotated stuff.
+	testFile, err = os.Open(testFile.Name())
+	if err != nil {
+		fmt.Print(err.Error())
+		t.Fail()
+		return
+	}
+
+	testContent, err := ioutil.ReadAll(testFile)
+	if err != nil {
+		fmt.Print(err.Error())
+		t.Fail()
+		return
+	}
+
+	if bMatch, _ := regexp.MatchString(`WARN:[\d\s:/]+New MSG`, string(testContent)); !bMatch {
+		fmt.Print("new log message missing!\n")
+		t.Fail()
+		return
+	}
+
+	if bMatch, _ := regexp.MatchString(`ERROR`, string(testContent)); bMatch {
+		fmt.Print("messages frome before log rotation are in log!\n")
+		t.Fail()
+		return
+	}
+
+	//check that rotated log contains correct information
+	roLog, err := os.Open(testFile.Name() + ".rotated.gz")
+	if err != nil {
+		fmt.Print(err.Error())
+		t.Fail()
+		return
+	}
+
+	roLogReader, err := gzip.NewReader(roLog)
+	if err != nil {
+		fmt.Print(err.Error())
+		t.Fail()
+		return
+	}
+
+	roLogContent, err := ioutil.ReadAll(roLogReader)
+	if err != nil {
+		fmt.Print(err.Error())
+		t.Fail()
+		return
+	}
+	roLogReader.Close()
+
+	if bMatch, _ := regexp.MatchString(`ERROR:[\d\s:/]+Send HELP!`, string(roLogContent)); !bMatch {
+		fmt.Print("Rotated log does not contain correct data! \n")
+		t.Fail()
+		return
+	}
 }

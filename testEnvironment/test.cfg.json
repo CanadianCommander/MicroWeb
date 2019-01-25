@@ -3,11 +3,14 @@
     "TCPProtocol":      "tcp4",
     "TCPPort":          ":8080",
     "staticDirectory":  "/tmp/testEnvironment/web/",
-    "logFile":          "/tmp/microWeb.log",
-    "logVerbosity":     "verbose",
     "autoReloadSettings": false,
     "redirectPorts": [":8081", ":9090"],
     "redirectURL": "http://127.0.0.1"
+  },
+
+  "logging": {
+    "logFile":       "/tmp/microWeb.log",
+    "verbosity":     "verbose"
   },
 
   "tls": {

@@ -42,8 +42,13 @@ func GetSettingString(path string) string {
 
 	val, bOk := settingMap[path]
 	if !bOk {
-		val = ""
+		return ""
 	}
+	val, bOk = val.(string)
+	if !bOk {
+		return ""
+	}
+
 	return val.(string)
 }
 
@@ -57,8 +62,13 @@ func GetSettingBool(path string) bool {
 
 	val, bOk := settingMap[path]
 	if !bOk {
-		val = false
+		return false
 	}
+	val, bOk = val.(bool)
+	if !bOk {
+		return false
+	}
+
 	return val.(bool)
 }
 
@@ -71,10 +81,18 @@ func GetSettingInt(path string) int {
 	defer settingLock.Unlock()
 
 	val, bOk := settingMap[path]
-	if !bOk {
-		val = 0
+	if bOk {
+		valFloat, bOk := val.(float64)
+		if bOk {
+			return int(valFloat)
+		}
+		valInt, bOk := val.(int)
+		if bOk {
+			return valInt
+		}
 	}
-	return val.(int)
+
+	return 0
 }
 
 // AddSetting adds a new setting to the settings map.

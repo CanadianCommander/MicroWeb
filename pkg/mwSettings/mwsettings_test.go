@@ -10,7 +10,7 @@ func TestDecoders(t *testing.T) {
 	logger.LogToStd(logger.VDebug)
 	RemoveAllSettingDecoders()
 	ClearSettings()
-	getSettings := []string{"general/TCPProtocol", "general/TCPPort", "general/staticDirectory", "general/logFile", "general/logVerbosity", "general/autoReloadSettings"}
+	getSettings := []string{"general/TCPProtocol", "general/TCPPort", "general/staticDirectory", "logging/logFile", "logging/verbosity", "general/autoReloadSettings"}
 
 	for _, set := range getSettings {
 		basicDec := NewBasicDecoder(set)
@@ -46,7 +46,7 @@ func TestDecoderRemove(t *testing.T) {
 	logger.LogToStd(logger.VDebug)
 	RemoveAllSettingDecoders()
 	ClearSettings()
-	getSettings := []string{"general/TCPProtocol", "general/TCPPort", "general/staticDirectory", "general/logFile", "general/logVerbosity", "general/autoReloadSettings"}
+	getSettings := []string{"general/TCPProtocol", "general/TCPPort", "general/staticDirectory", "logging/logFile", "logging/verbosity", "general/autoReloadSettings"}
 	decoderList := make([]SettingDecoder, len(getSettings))
 
 	for i, set := range getSettings {
@@ -87,7 +87,7 @@ func TestListeners(t *testing.T) {
 	RemoveAllSettingDecoders()
 	ClearSettings()
 
-	getSettings := []string{"general/TCPProtocol", "general/TCPPort", "general/staticDirectory", "general/logFile", "general/logVerbosity", "general/autoReloadSettings"}
+	getSettings := []string{"general/TCPProtocol", "general/TCPPort", "general/staticDirectory", "logging/logFile", "logging/verbosity", "general/autoReloadSettings"}
 	decoderList := make([]SettingDecoder, len(getSettings))
 
 	for i, set := range getSettings {

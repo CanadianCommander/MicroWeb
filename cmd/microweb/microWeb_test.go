@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -10,8 +11,12 @@ import (
 	"os/exec"
 	"path"
 	"regexp"
+	"runtime"
 	"testing"
 	"time"
+
+	"github.com/CanadianCommander/MicroWeb/pkg/logger"
+	mwsettings "github.com/CanadianCommander/MicroWeb/pkg/mwSettings"
 )
 
 //TestMain sets up the testing environment
@@ -180,6 +185,104 @@ func TestRedirect(t *testing.T) {
 	if err1 != nil || err2 != nil {
 		t.Fail()
 	}
+}
+
+func TestLogRotationBySize(t *testing.T) {
+	tmpFile, err := ioutil.TempFile("/tmp/", "microweb-size-")
+	if err != nil {
+		fmt.Print(err.Error())
+		t.Fail()
+		return
+	}
+	tmpFile.Close()
+
+	mwsettings.ClearSettings()
+	mwsettings.AddSetting("logging/logFile", tmpFile.Name())
+	mwsettings.AddSetting("logging/verbosity", "debug")
+	mwsettings.AddSetting("logging/compressLogs", false)
+	mwsettings.AddSetting("logging/rotateMB", 1)
+	mwsettings.AddSetting("logging/rotateMBcheckInterval", "5ms")
+	mwsettings.AddSetting("logging/rotateKeep", 20)
+	closeFunc := InitLogging()
+
+	checkForMissingLogMessages(t, tmpFile)
+
+	// kill rotation thread
+	routineNum := runtime.NumGoroutine()
+	closeFunc()
+	time.Sleep(1 * time.Millisecond)
+	if routineNum == runtime.NumGoroutine() {
+		fmt.Print("failed to kill log rotation goroutine")
+		t.Fail()
+	}
+}
+
+func TestLogRotationByTime(t *testing.T) {
+	tmpFile, err := ioutil.TempFile("/tmp/", "microweb-time-")
+	if err != nil {
+		fmt.Print(err.Error())
+		t.Fail()
+		return
+	}
+	tmpFile.Close()
+
+	mwsettings.ClearSettings()
+	mwsettings.AddSetting("logging/logFile", tmpFile.Name())
+	mwsettings.AddSetting("logging/verbosity", "debug")
+	mwsettings.AddSetting("logging/compressLogs", false)
+	mwsettings.AddSetting("logging/rotateTime", "250ms")
+	mwsettings.AddSetting("logging/rotateKeep", 20)
+	closeFunc := InitLogging()
+
+	checkForMissingLogMessages(t, tmpFile)
+
+	// kill rotation thread
+	routineNum := runtime.NumGoroutine()
+	closeFunc()
+	time.Sleep(1 * time.Millisecond)
+	if routineNum == runtime.NumGoroutine() {
+		fmt.Print("failed to kill log rotation goroutine")
+		t.Fail()
+	}
+}
+
+func checkForMissingLogMessages(t *testing.T, logFile *os.File) {
+	const logMessageCount = 500000
+
+	// produce some log messages
+	for i := 0; i < logMessageCount/2; i++ {
+		logger.LogDebug("msg msg msg")
+	}
+	for i := 0; i < logMessageCount/2; i++ {
+		logger.LogDebug("msg msg msg")
+	}
+	time.Sleep(50 * time.Millisecond)
+
+	// read all log data from across all log files and delete them.
+	allLogContent := &bytes.Buffer{}
+	testDir, _ := os.Open(path.Dir(logFile.Name()))
+	files, _ := testDir.Readdir(0)
+	for _, file := range files {
+		if bMatch, _ := regexp.MatchString(logFile.Name()+`.*`, path.Join(testDir.Name(), file.Name())); bMatch {
+			logFile, err := os.Open(path.Join(testDir.Name(), file.Name()))
+			if err != nil {
+				fmt.Printf("Could not open log file with error %s \n", err.Error())
+				t.Fail()
+				return
+			}
+			allLogContent.ReadFrom(logFile)
+			logFile.Close()
+			os.Remove(path.Join(testDir.Name(), file.Name()))
+		}
+	}
+
+	regexLogCheck, _ := regexp.Compile(`msg msg msg`)
+	matches := regexLogCheck.FindAllString(string(allLogContent.Bytes()), -1)
+	if len(matches) != logMessageCount {
+		fmt.Printf("expecting: %d log entries but got: %d \n", logMessageCount, len(matches))
+		t.Fail()
+	}
+
 }
 
 func doGet(url string, validStatus int, validationFunc func([]byte)) error {

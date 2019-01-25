@@ -30,10 +30,11 @@ func main() {
 		SetCliGlobalSettings(cliArguments)
 	}
 
-	// build main program setting decoders
+	// build setting decoders
 	AddPrimarySettingDecoders()
 	AddPluginSettingDecoder()
 	AddSecuritySettingDecoders()
+	AddLogSettingDecoders()
 	cache.AddCacheSettingDecoders()
 	database.AddDatabaseSettingDecoder()
 	templateHelper.AddTemplateHelperSettingDecoders()
@@ -48,14 +49,8 @@ func main() {
 		logger.LogError("Could not parse settings! with error %s \n", err.Error())
 	}
 
-	//update logging configuration
-	if mwsettings.HasSetting("general/logFile") {
-		logVerbosity := logger.VVerbose
-		if mwsettings.HasSetting("general/logVerbosity") {
-			logVerbosity = logger.VerbosityStringToEnum(mwsettings.GetSettingString("general/logVerbosity"))
-		}
-		logger.LogToStdAndFile(logVerbosity, mwsettings.GetSettingString("general/logFile"))
-	}
+	//setup logging
+	InitLogging()
 
 	if mwsettings.GetSettingBool("general/autoReloadSettings") {
 		stopChanAutoLoad := mwsettings.WatchConfigurationFile(mwsettings.GetSettingString("configurationFilePath"))
@@ -97,7 +92,7 @@ func main() {
 //AddPrimarySettingDecoders add basic setting decoders
 func AddPrimarySettingDecoders() {
 	basicSettings := []string{"general/TCPProtocol", "general/TCPPort", "general/staticDirectory",
-		"general/logFile", "general/logVerbosity", "general/autoReloadSettings", "general/redirectPorts",
+		"general/autoReloadSettings", "general/redirectPorts",
 		"general/redirectURL", "tls/enableTLS", "tls/certFile", "tls/keyFile", "tune/httpReadTimeout",
 		"tune/httpResponseTimeout", "tune/max-age"}
 

@@ -4,7 +4,7 @@ GOTEST = go test
 GOGET = go get
 BINARY_FILE = microweb.a
 GOBUILD_FLAGS = -o $(BINARY_FILE)
-GOTEST_FLAGS = -v -timeout=60s
+GOTEST_FLAGS = -v -timeout=60s -count 1
 
 # build microweb
 MAIN_PKG = ./cmd/microweb/
@@ -25,7 +25,7 @@ clean:
 
 .PHONY: test
 test:
-	$(GOTEST) ./cmd/microweb #<- this installs testing infrastructure and must be run first 
+	$(GOTEST) $(GOTEST_FLAGS) ./cmd/microweb #<- this installs testing infrastructure and must be run first
 	$(GOTEST) $(GOTEST_FLAGS) $(TEST_PKGS) || (echo '=== TEST FAILED ==='; exit 1) && echo "=== TEST PASS ==="
 
 .PHONY: getdep
