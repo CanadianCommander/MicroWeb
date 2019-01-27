@@ -52,6 +52,12 @@ func main() {
 	//setup logging
 	InitLogging()
 
+	// setup cache
+	cache.StartCache()
+
+	//load plugins
+	LoadAllPlugins()
+
 	if mwsettings.GetSettingBool("general/autoReloadSettings") {
 		stopChanAutoLoad := mwsettings.WatchConfigurationFile(mwsettings.GetSettingString("configurationFilePath"))
 		defer close(stopChanAutoLoad)
@@ -61,8 +67,6 @@ func main() {
 	stopChanReload := mwsettings.WaitForReload("/tmp/microweb.fifo")
 	defer close(stopChanReload)
 
-	// setup cache
-	cache.StartCache()
 	// if settings change update ttl
 	mwsettings.AddSettingListener(func() {
 		newTTL, parseError := time.ParseDuration(mwsettings.GetSettingString("tune/cacheTTL"))

@@ -8,6 +8,7 @@ import (
 	"plugin"
 	"reflect"
 	"sort"
+	"time"
 
 	"github.com/CanadianCommander/MicroWeb/pkg/cache"
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
@@ -18,6 +19,9 @@ import (
 IPlugin a generic plugin interface that all plugins must implement (some functions optional)
 */
 type IPlugin interface {
+	//called to intialize the plugin.
+	Init()
+
 	//called to handle normal resource requests
 	HandleRequest(req *http.Request, res http.ResponseWriter, fsName string) bool
 
@@ -29,8 +33,18 @@ type IPlugin interface {
 BasicPlugin a basic implementation of the IPlugin interface.
 */
 type BasicPlugin struct {
+	bIsInti                  bool
+	InitFunc                 func()
 	HandleRequestFunc        func(req *http.Request, res http.ResponseWriter, fsName string) bool
 	HandleVirtualRequestFunc func(req *http.Request, res http.ResponseWriter) bool
+}
+
+/*
+Init calls the init function provided by the plugins symbol table.
+*/
+func (tp *BasicPlugin) Init() {
+	tp.InitFunc()
+	tp.bIsInti = true
 }
 
 /*
@@ -45,6 +59,10 @@ HandleVirtualRequest passes through the function call to a function pointer load
 */
 func (tp *BasicPlugin) HandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool {
 	return tp.HandleVirtualRequestFunc(req, res)
+}
+
+func defaultInit() {
+	//nop
 }
 
 func defaultHandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool {
@@ -64,6 +82,26 @@ func defaultHandleRequest(req *http.Request, res http.ResponseWriter, fsName str
 
 	res.WriteHeader(500)
 	return false
+}
+
+/*
+LoadAllPlugins loads all the plugins in the configuration file and calls their init methods.
+*/
+func LoadAllPlugins() {
+	if mwsettings.HasSetting("plugin/plugins") {
+		startTime := time.Now()
+		logger.LogInfo("loading plugins....")
+		pluginList := mwsettings.GetSetting("plugin/plugins").([]pluginBinding)
+
+		for _, plugin := range pluginList {
+			_, err := LoadPlugin(plugin.Plugin)
+			if err != nil {
+				logger.LogError("failed to load plugin with error: %s", err)
+			}
+			logger.LogVerbose("plugin: %s loaded", plugin.Plugin)
+		}
+		logger.LogInfo("plugins loaded in %d ms", time.Since(startTime)/time.Millisecond)
+	}
 }
 
 /*
@@ -94,8 +132,9 @@ func LoadPlugin(path string) (IPlugin, error) {
 		return nil, errors.New("plugin has incorrect format")
 	}
 
-	//NOTE, time.Duration(^(uint64(1) << 63)) sets the ttl of plugins to 290 years ... aka never delete
-	//really should be a MAX_DURATION type constant. If it exists I couldn't find it.
+	//initialize
+	plugin.Init()
+
 	cache.AddToCacheTTLOverride(cache.CacheTypePlugin, path, cache.MaxTTL, plugin)
 	return plugin, nil
 
@@ -115,25 +154,37 @@ func _loadPlugin(path string) (*plugin.Plugin, error) {
 func constructPlugin(plugin *plugin.Plugin) IPlugin {
 	NewPlugin := BasicPlugin{}
 
+	initFunc, err := plugin.Lookup("Init")
+	if err != nil {
+		logger.LogInfo("Plugin does not export Optional function 'func Init()', using default")
+		initFunc = defaultInit
+	}
 	handleReqFunc, err := plugin.Lookup("HandleRequest")
 	if err != nil {
-		logger.LogInfo("Plugin does not export Optional function 'func HandleRequest(req *http.Request, res http.ResponseWriter, fsName string) bool'")
+		logger.LogInfo("Plugin does not export Optional function 'func HandleRequest(req *http.Request, res http.ResponseWriter, fsName string) bool', using default")
 		handleReqFunc = defaultHandleRequest
 	}
 	handleVirtualReqFunc, err := plugin.Lookup("HandleVirtualRequest")
 	if err != nil {
-		logger.LogInfo("Plugin does not export optional function 'func HandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool, using default'")
+		logger.LogInfo("Plugin does not export optional function 'func HandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool', using default")
 		handleVirtualReqFunc = defaultHandleVirtualRequest
 	}
 
-	var bErr bool
-	NewPlugin.HandleRequestFunc, bErr = handleReqFunc.(func(req *http.Request, res http.ResponseWriter, fsName string) bool)
-	if !bErr {
-		logger.LogError("Plugin HandleRequest(...) function does not match IPlugin interface")
+	var bOk bool
+	NewPlugin.InitFunc, bOk = initFunc.(func())
+	if !bOk {
+		logger.LogError("Plugin Init() function does not match IPlugin interface")
+		return nil
 	}
-	NewPlugin.HandleVirtualRequestFunc, bErr = handleVirtualReqFunc.(func(req *http.Request, res http.ResponseWriter) bool)
-	if !bErr {
+	NewPlugin.HandleRequestFunc, bOk = handleReqFunc.(func(req *http.Request, res http.ResponseWriter, fsName string) bool)
+	if !bOk {
+		logger.LogError("Plugin HandleRequest(...) function does not match IPlugin interface")
+		return nil
+	}
+	NewPlugin.HandleVirtualRequestFunc, bOk = handleVirtualReqFunc.(func(req *http.Request, res http.ResponseWriter) bool)
+	if !bOk {
 		logger.LogError("Plugin HandleVirtualRequest(...) function does not match IPlugin interface")
+		return nil
 	}
 
 	return &NewPlugin

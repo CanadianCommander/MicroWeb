@@ -3,12 +3,19 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/CanadianCommander/MicroWeb/pkg/database"
 )
 
+var apiVar = 0
+
 type FOOBAR struct {
 	Msg string
+}
+
+func Init() {
+	apiVar = 42
 }
 
 func HandleRequest(req *http.Request, res http.ResponseWriter, fsName string) bool {
@@ -45,6 +52,8 @@ func HandleVirtualRequest(req *http.Request, res http.ResponseWriter) bool {
 		fmt.Fprint(res, *s1+" "+*s2)
 		rows.Close()
 
+	} else if string(req.URL.Path) == "/api/magicNumber" {
+		fmt.Fprint(res, strconv.Itoa(apiVar))
 	} else {
 		fmt.Fprint(res, "HELLO FROM AN API FUNCTION!")
 	}

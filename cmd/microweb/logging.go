@@ -57,6 +57,7 @@ func InitLogging() func() {
 		go rotateFunc()
 	}
 
+	logger.LogInfo("loggers constructed")
 	return func() {
 		if sizeChan != nil {
 			close(sizeChan)

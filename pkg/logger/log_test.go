@@ -196,7 +196,7 @@ func TestLogRotate(t *testing.T) {
 	}
 
 	err = RotateLogFile(path.Base(testFile.Name())+".rotated.gz", true)
-	time.Sleep(50 * time.Millisecond) // <- wait for background gzip of log to complete
+	time.Sleep(100 * time.Millisecond) // <- wait for background gzip of log to complete
 	if err != nil {
 		fmt.Print("Failed to rotate log with error: " + err.Error())
 		t.Fail()

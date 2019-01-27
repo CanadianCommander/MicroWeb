@@ -124,7 +124,19 @@ func TestHTTPNormalContent(t *testing.T) {
 
 //test invoking an api plugin
 func TestAPIPlugin(t *testing.T) {
-	err := doGet("http://localhost:8080/api/", 200, func(b []byte) {
+	//check that api was initialized
+	err := doGet("http://localhost:8080/api/magicNumber", 200, func(b []byte) {
+		if matched, _ := regexp.MatchString("42", string(b)); !matched {
+			fmt.Printf("API magic number incorrect. Expecting 42 got %s", string(b))
+			t.Fail()
+		}
+	})
+	if err != nil {
+		t.Fail()
+		return
+	}
+
+	err = doGet("http://localhost:8080/api/", 200, func(b []byte) {
 		if matched, _ := regexp.MatchString("HELLO FROM AN API FUNCTION!", string(b)); !matched {
 			fmt.Printf("API response did not contain the expected string, it contained: %s\n", string(b))
 			t.Fail()
