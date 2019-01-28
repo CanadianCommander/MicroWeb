@@ -9,7 +9,6 @@ import (
 	"path"
 	"regexp"
 	"testing"
-	"time"
 )
 
 //test support stuff
@@ -195,13 +194,13 @@ func TestLogRotate(t *testing.T) {
 		LogError("Send HELP!")
 	}
 
-	err = RotateLogFile(path.Base(testFile.Name())+".rotated.gz", true)
-	time.Sleep(100 * time.Millisecond) // <- wait for background gzip of log to complete
+	doneChan, err := RotateLogFile(path.Base(testFile.Name())+".rotated.gz", true)
 	if err != nil {
 		fmt.Print("Failed to rotate log with error: " + err.Error())
 		t.Fail()
 		return
 	}
+	<-doneChan // <- wait for background gzip of log to complete
 	defer os.Remove(testFile.Name() + ".rotated.gz")
 	LogWarning("New MSG")
 

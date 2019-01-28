@@ -148,13 +148,13 @@ func rotateLogs() {
 	}
 
 	if mwsettings.GetSettingBool("logging/compressLogs") {
-		err := logger.RotateLogFile(path.Base(lFile.Name())+".0.gz", true)
+		_, err := logger.RotateLogFile(path.Base(lFile.Name())+".0.gz", true)
 		if err != nil {
 			logger.LogError("could not rotate log file with error: %s", err.Error())
 			return
 		}
 	} else {
-		err := logger.RotateLogFile(path.Base(lFile.Name())+".0", false)
+		_, err := logger.RotateLogFile(path.Base(lFile.Name())+".0", false)
 		if err != nil {
 			logger.LogError("could not rotate log file with error: %s", err.Error())
 			return

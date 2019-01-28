@@ -238,8 +238,11 @@ closed, renamed, and compressed. Then a new log file is opened.
 params:
 	rotateName - the name that the current log file should be renamed to.
 	compress - if true the rotated log file is compressed.
+return:
+	<-chan bool - channel that will be closed when gzip is complete. nil if no gzip compression or error.
+	error - any error that might have occured during log rotation
 */
-func RotateLogFile(rotateName string, compress bool) error {
+func RotateLogFile(rotateName string, compress bool) (<-chan bool, error) {
 
 	if currLogFile != nil {
 		logMutex.Lock()
@@ -251,17 +254,23 @@ func RotateLogFile(rotateName string, compress bool) error {
 		currLogFile.Close()
 		err := os.Rename(currLogFile.Name(), path.Join(dirName, rotateName))
 		if err != nil {
-			return err
-		}
-		if compress {
-			go compressLogFile(path.Join(dirName, rotateName))
+			return nil, err
 		}
 
 		//rebuild loggers
 		reconstructLoggers(currLogMode, currLogFile.Name())
-		return nil
+
+		if compress {
+			doneChan := make(chan bool)
+			go func() {
+				compressLogFile(path.Join(dirName, rotateName))
+				close(doneChan)
+			}()
+			return doneChan, nil
+		}
+		return nil, nil
 	}
-	return errors.New("no log file open")
+	return nil, errors.New("no log file open")
 }
 
 // reconstructs loggers based on logMode. (used by log rotation)
@@ -361,6 +370,7 @@ func setLoggerOutput(logWriters []io.Writer) {
 	logError.SetOutput(logWriters[4])
 }
 
+// compressLogFile compresses the log file at logPath with gzip.
 func compressLogFile(logPath string) error {
 	lFile, err := os.OpenFile(logPath, os.O_RDWR, 0644)
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -25,9 +26,25 @@ func TestMain(t *testing.M) {
 	serverContext, ctxCancel := context.WithCancel(context.Background())
 	serverCmd := buildNStartMicroWeb(&serverContext)
 
-	//give the web server a bit of time to startup
-	time.Sleep(50 * time.Millisecond)
+	//give the web server up to a second to start
+	startTime := time.Now()
+	for time.Since(startTime) < 1*time.Second {
+		time.Sleep(10 * time.Millisecond)
+		con, err := net.Dial("tcp", "127.0.0.1:8080")
+		if err == nil {
+			//server is up!
+			con.Close()
+			break
+		}
+	}
+	if time.Since(startTime) >= 1*time.Second {
+		fmt.Printf("Server failed to start in %dms\n", time.Since(startTime)/time.Millisecond)
+		os.Exit(1)
+	} else {
+		fmt.Printf("Server startup time: %dms\n", time.Since(startTime)/time.Millisecond)
+	}
 
+	// run tests
 	returnCode := t.Run()
 
 	//stop web server
