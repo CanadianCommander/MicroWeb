@@ -192,8 +192,8 @@ func constructPlugin(plugin *plugin.Plugin) IPlugin {
 
 //pluginBinding represents the plugin setting structure in the configuration function
 type pluginBinding struct {
-	Binding string
-	Plugin  string
+	BindingList []string
+	Plugin      string
 }
 
 //AddPluginSettingDecoder adds a decoder for the plugin setting format in the config file.
@@ -207,7 +207,17 @@ func AddPluginSettingDecoder() {
 
 			for i, plugin := range pluginList {
 				outList[i] = pluginBinding{}
-				outList[i].Binding = plugin.(map[string]interface{})["binding"].(string)
+
+				binding := plugin.(map[string]interface{})["binding"]
+				if reflect.ValueOf(binding).Kind() == reflect.Slice {
+					outList[i].BindingList = make([]string, len(binding.([]interface{})))
+					for z, bind := range binding.([]interface{}) {
+						outList[i].BindingList[z] = bind.(string)
+					}
+				} else {
+					outList[i].BindingList = make([]string, 1)
+					outList[i].BindingList[0] = binding.(string)
+				}
 				outList[i].Plugin = plugin.(map[string]interface{})["plugin"].(string)
 			}
 			return pluginPath, outList
@@ -237,7 +247,18 @@ the frist binding will be used.
 */
 func GetPluginByResourcePath(fsPath string) (string, error) {
 	if mwsettings.HasSetting("plugin/plugins") {
-		pluginList := mwsettings.GetSetting("plugin/plugins").([]pluginBinding)
+
+		type bindingMapping struct {
+			Binding,
+			Plugin string
+		}
+
+		var pluginList []bindingMapping
+		for _, plugin := range mwsettings.GetSetting("plugin/plugins").([]pluginBinding) {
+			for _, binding := range plugin.BindingList {
+				pluginList = append(pluginList, bindingMapping{binding, plugin.Plugin})
+			}
+		}
 
 		lessFunction := func(i, j int) bool {
 			iDist := StringMatchLength(path.Join(mwsettings.GetSettingString("general/staticDirectory"), pluginList[i].Binding), fsPath)

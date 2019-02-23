@@ -159,6 +159,16 @@ func TestAPIPlugin(t *testing.T) {
 			t.Fail()
 		}
 	})
+	if err != nil {
+		t.Fail()
+	}
+
+	err = doGet("http://localhost:8080/maxAPI/", 200, func(b []byte) {
+		if matched, _ := regexp.MatchString("HELLO FROM AN API FUNCTION!", string(b)); !matched {
+			fmt.Printf("API not found on secondary URL")
+			t.Fail()
+		}
+	})
 
 	if err != nil {
 		t.Fail()
