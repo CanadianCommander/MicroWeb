@@ -8,10 +8,10 @@ GOTEST_FLAGS = -v -timeout=60s -count 1
 
 # build microweb
 MAIN_PKG = ./cmd/microweb/
-SRC_GO = ./cmd/microweb/*.go ./pkg/cache/*.go ./pkg/database/*.go ./pkg/logger/*.go ./pkg/mwSettings/*.go ./pkg/pluginUtil/*.go ./pkg/templateHelper/*.go
+SRC_GO = ./cmd/microweb/*.go ./pkg/cache/*.go ./pkg/database/*.go ./pkg/logger/*.go ./pkg/mwSettings/*.go ./pkg/pluginUtil/*.go ./pkg/templateHelper/*.go ./pkg/session/*.go
 
 # test (./cmd/microweb must come first)
-TEST_PKGS = ./cmd/microweb ./pkg/cache ./pkg/logger ./pkg/mwSettings ./pkg/templateHelper
+TEST_PKGS = ./cmd/microweb ./pkg/cache ./pkg/logger ./pkg/mwSettings ./pkg/templateHelper ./pkg/session
 
 $(BINARY_FILE): $(SRC_GO)
 	$(GOBUILD) $(GOBUILD_FLAGS) $(MAIN_PKG)
