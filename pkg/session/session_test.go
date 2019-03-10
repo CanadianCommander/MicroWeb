@@ -109,7 +109,7 @@ func TestSessionHttp(t *testing.T) {
 			}
 		})
 
-		http.ListenAndServe(":8081", nil)
+		http.ListenAndServe(":9042", nil)
 	}()
 
 	//build client obj
@@ -120,7 +120,7 @@ func TestSessionHttp(t *testing.T) {
 
 	// wait for http server to come up! (max 1 second)
 	for i := 0; i < 101; i++ {
-		_, err := client.Get("http://localhost:8081/getSession")
+		_, err := client.Get("http://localhost:9042/getSession")
 		if err == nil {
 			break
 		}
@@ -133,7 +133,7 @@ func TestSessionHttp(t *testing.T) {
 	}
 
 	// check that the cookie cad be decoded.
-	resp, _ := client.Get("http://localhost:8081/checkSession")
+	resp, _ := client.Get("http://localhost:9042/checkSession")
 	if resp.StatusCode != 200 {
 		fmt.Printf("Wrong status [%s] expecting 200\n", resp.Status)
 		t.Fail()
