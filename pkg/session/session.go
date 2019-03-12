@@ -8,6 +8,7 @@ import (
 	"crypto/sha512"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/CanadianCommander/MicroWeb/pkg/logger"
@@ -58,6 +59,11 @@ type Session struct {
 FromBuffer builds the session object from a session object buffer
 */
 func (session *Session) FromBuffer(buffer []byte) error {
+	if len(buffer) <= (sha512.Size + aes.BlockSize) {
+		errorStr := fmt.Sprintf("buffer invalid. buffer must be at least %d bytes long", (sha512.Size + aes.BlockSize))
+		return errors.New(errorStr)
+	}
+
 	iv := string(buffer[len(buffer)-aes.BlockSize:])
 	buffer = buffer[:len(buffer)-aes.BlockSize]
 	key := session.GetKey()
